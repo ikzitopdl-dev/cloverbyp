@@ -1,188 +1,220 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Clover · Remote Control</title>
 <style>
   :root {
-    --bg: #0e0e10;
-    --bg2: #141416;
-    --bg3: #1a1a1d;
-    --bg4: #222226;
-    --border: #2a2a2f;
-    --accent: #e040fb;
-    --accent2: #c000e0;
-    --text: #f0f0f5;
-    --muted: #7a7a8a;
-    --danger: #e05555;
-    --success: #40e080;
-    --sidebar-w: 200px;
+    --bg:     #0a0a0b;
+    --bg2:    #111113;
+    --bg3:    #181819;
+    --bg4:    #1f1f22;
+    --border: #2a2020;
+    --accent: #ff6a00;
+    --accent2:#e05500;
+    --glow:   rgba(255,106,0,0.18);
+    --text:   #f0ece8;
+    --muted:  #6b5f5a;
+    --danger: #e04040;
+    --success:#40c880;
+    --sidebar-w: 210px;
   }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; min-height: 100vh; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; font-size: 14px; min-height: 100vh; }
+
+  /* ── spiderwebs corner deco ── */
+  body::before, body::after {
+    content: '🕸'; position: fixed; font-size: 80px; opacity: 0.07; pointer-events: none; z-index: 0;
+  }
+  body::before { top: -10px; left: -10px; transform: rotate(-20deg); }
+  body::after  { top: -10px; right: -10px; transform: rotate(20deg) scaleX(-1); }
 
   /* ── PAIR SCREEN ── */
   #pair-screen {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    min-height: 100vh; gap: 24px; padding: 24px;
+    min-height: 100vh; gap: 20px; padding: 24px; position: relative; z-index: 1;
   }
-  #pair-screen .logo { font-size: 22px; font-weight: 700; letter-spacing: 1px; color: var(--accent); }
+  .pair-logo { width: 96px; height: 96px; object-fit: contain; filter: drop-shadow(0 0 18px var(--accent)); }
+  .pair-logo-fallback { font-size: 64px; line-height: 1; filter: drop-shadow(0 0 12px var(--accent)); }
+  #pair-screen .brand { font-size: 26px; font-weight: 800; letter-spacing: 1px; color: var(--accent); text-shadow: 0 0 20px var(--accent); }
   #pair-screen .sub { color: var(--muted); font-size: 13px; }
   #pair-screen .card {
-    background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+    background: var(--bg2); border: 1px solid #3a2010; border-radius: 14px;
     padding: 32px; width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 16px;
+    box-shadow: 0 0 40px rgba(255,106,0,0.08);
   }
   #pair-screen input {
-    background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
-    color: var(--text); font-size: 22px; font-weight: 700; letter-spacing: 6px; text-align: center;
-    padding: 14px; width: 100%; outline: none; text-transform: uppercase;
-    transition: border-color 0.2s;
+    background: var(--bg3); border: 1px solid #3a2010; border-radius: 9px;
+    color: var(--text); font-size: 24px; font-weight: 800; letter-spacing: 8px; text-align: center;
+    padding: 14px; width: 100%; outline: none; text-transform: uppercase; font-family: monospace;
+    transition: border-color 0.2s, box-shadow 0.2s;
   }
-  #pair-screen input:focus { border-color: var(--accent); }
+  #pair-screen input:focus { border-color: var(--accent); box-shadow: 0 0 12px rgba(255,106,0,0.2); }
   #pair-screen .btn-primary {
-    background: var(--accent); color: #fff; border: none; border-radius: 8px;
-    padding: 13px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+    background: var(--accent); color: #fff; border: none; border-radius: 9px;
+    padding: 13px; font-size: 15px; font-weight: 700; cursor: pointer; transition: background 0.2s, box-shadow 0.2s;
+    box-shadow: 0 0 16px rgba(255,106,0,0.3);
   }
-  #pair-screen .btn-primary:hover { background: var(--accent2); }
-  #pair-err { color: var(--danger); font-size: 13px; text-align: center; min-height: 18px; }
+  #pair-screen .btn-primary:hover { background: var(--accent2); box-shadow: 0 0 24px rgba(255,106,0,0.5); }
+  #pair-err { color: #ff6060; font-size: 13px; text-align: center; min-height: 18px; }
 
   /* ── APP SHELL ── */
-  #app { display: none; height: 100vh; overflow: hidden; }
+  #app { display: none; height: 100vh; overflow: hidden; position: relative; z-index: 1; }
 
   /* Sidebar */
   #sidebar {
     position: fixed; top: 0; left: 0; width: var(--sidebar-w); height: 100vh;
-    background: var(--bg2); border-right: 1px solid var(--border);
+    background: var(--bg2); border-right: 1px solid #2a1a0a;
     display: flex; flex-direction: column; z-index: 10;
   }
   .logo-bar {
-    padding: 18px 16px 14px; border-bottom: 1px solid var(--border);
+    padding: 16px 14px 14px; border-bottom: 1px solid #2a1a0a;
     display: flex; align-items: center; gap: 10px;
   }
-  .logo-bar .logo-dot {
-    width: 32px; height: 32px; background: var(--accent); border-radius: 8px;
-    display: flex; align-items: center; justify-content: center; font-size: 16px;
-  }
-  .logo-bar .logo-text { font-weight: 700; font-size: 15px; }
-  .logo-bar .logo-sub { color: var(--muted); font-size: 11px; }
-  nav { flex: 1; padding: 10px 0; overflow-y: auto; }
+  .logo-bar img { width: 36px; height: 36px; object-fit: contain; filter: drop-shadow(0 0 6px var(--accent)); }
+  .logo-bar .logo-fallback { font-size: 28px; filter: drop-shadow(0 0 6px var(--accent)); }
+  .logo-bar .logo-text { font-weight: 800; font-size: 15px; color: var(--accent); letter-spacing: 0.5px; }
+  .logo-bar .logo-sub { color: var(--muted); font-size: 10px; margin-top: 1px; }
+  nav { flex: 1; padding: 8px 0; overflow-y: auto; }
   nav a {
-    display: flex; align-items: center; gap: 10px; padding: 10px 16px;
-    color: var(--muted); text-decoration: none; border-radius: 0; cursor: pointer;
-    transition: color 0.15s, background 0.15s; font-size: 14px; border-left: 3px solid transparent;
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    color: var(--muted); text-decoration: none; cursor: pointer;
+    transition: color 0.15s, background 0.15s; font-size: 13px; font-weight: 500;
+    border-left: 3px solid transparent;
   }
   nav a:hover { color: var(--text); background: var(--bg3); }
-  nav a.active { color: var(--accent); background: rgba(224,64,251,0.08); border-left-color: var(--accent); }
-  nav a .icon { width: 18px; text-align: center; font-size: 15px; }
+  nav a.active { color: var(--accent); background: rgba(255,106,0,0.07); border-left-color: var(--accent); }
+  nav a .icon { width: 18px; text-align: center; font-size: 14px; }
   .session-box {
-    padding: 14px 16px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px;
+    padding: 12px 14px; border-top: 1px solid #2a1a0a; display: flex; flex-direction: column; gap: 7px;
   }
-  .session-label { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+  .session-label { font-size: 9px; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
   .status-dot { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
-  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
   .dot.connected { background: var(--success); box-shadow: 0 0 6px var(--success); }
   .btn-destruct {
-    background: var(--danger); color: #fff; border: none; border-radius: 7px;
-    padding: 9px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+    background: #8b0000; color: #ffcccc; border: 1px solid #c00; border-radius: 7px;
+    padding: 8px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    text-align: center;
   }
+  .btn-destruct:hover { background: #b00000; box-shadow: 0 0 10px rgba(200,0,0,0.4); }
   .btn-unload {
-    background: transparent; color: var(--danger); border: 1px solid var(--danger); border-radius: 7px;
-    padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+    background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 7px;
+    padding: 7px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; text-align: center;
   }
-  .btn-destruct:hover, .btn-unload:hover { opacity: 0.8; }
+  .btn-unload:hover { background: rgba(255,106,0,0.1); box-shadow: 0 0 10px rgba(255,106,0,0.3); }
 
-  /* Main content */
-  #main { margin-left: var(--sidebar-w); height: 100vh; overflow-y: auto; }
-  .page { display: none; padding: 28px 28px 40px; }
+  /* Main */
+  #main { margin-left: var(--sidebar-w); height: 100vh; overflow-y: auto; background: var(--bg); }
+  .page { display: none; padding: 26px 26px 40px; }
   .page.active { display: block; }
-  .page-header { margin-bottom: 22px; }
-  .page-title { font-size: 20px; font-weight: 700; }
-  .page-sub { color: var(--muted); font-size: 13px; margin-top: 3px; }
+  .page-header { margin-bottom: 20px; }
+  .page-title { font-size: 20px; font-weight: 800; color: var(--text); }
+  .page-sub { color: var(--muted); font-size: 12px; margin-top: 3px; }
   .sync-badge {
-    display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
-    color: var(--success); background: rgba(64,224,128,0.1); border-radius: 20px; padding: 3px 10px; margin-top: 8px;
+    display: inline-flex; align-items: center; gap: 6px; font-size: 11px;
+    color: var(--success); background: rgba(64,200,128,0.08); border-radius: 20px;
+    padding: 3px 10px; margin-top: 8px; border: 1px solid rgba(64,200,128,0.15);
   }
 
   /* Tabs */
-  .tabs { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tabs { display: flex; gap: 3px; margin-bottom: 18px; flex-wrap: wrap; }
   .tab {
-    padding: 7px 16px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer;
-    background: var(--bg3); color: var(--muted); border: none; transition: all 0.15s;
+    padding: 6px 14px; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer;
+    background: var(--bg3); color: var(--muted); border: 1px solid var(--border); transition: all 0.15s;
   }
-  .tab.active { background: var(--accent); color: #fff; }
-  .tab:hover:not(.active) { color: var(--text); }
+  .tab.active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 0 10px rgba(255,106,0,0.3); }
+  .tab:hover:not(.active) { color: var(--text); border-color: #3a2010; }
 
-  /* Cards grid */
-  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  /* Cards */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
   .card {
-    background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 18px;
+    background: var(--bg2); border: 1px solid #2a1a0a; border-radius: 12px; padding: 16px;
   }
   .card-title {
-    font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
-    color: var(--muted); margin-bottom: 14px; display: flex; justify-content: space-between;
+    font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;
   }
-  .card-title span { color: var(--bg4); font-size: 11px; }
+  .card-title .count { background: var(--bg4); color: var(--muted); font-size: 10px; padding: 1px 6px; border-radius: 4px; }
 
   /* Option row */
-  .opt { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .opt {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 0; border-bottom: 1px solid #1f1410;
+  }
   .opt:last-child { border-bottom: none; }
-  .opt-label { font-size: 14px; color: var(--text); }
-  .opt-label small { display: block; font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .opt-label { font-size: 13px; color: var(--text); line-height: 1.3; }
+  .opt-label small { display: block; font-size: 10px; color: var(--muted); margin-top: 1px; }
 
   /* Toggle */
-  .toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+  .toggle { position: relative; width: 38px; height: 21px; flex-shrink: 0; }
   .toggle input { opacity: 0; width: 0; height: 0; }
   .toggle .track {
     position: absolute; inset: 0; background: var(--bg4); border-radius: 11px;
-    cursor: pointer; transition: background 0.2s;
+    cursor: pointer; transition: background 0.2s; border: 1px solid #3a2010;
   }
   .toggle .track::after {
-    content: ''; position: absolute; top: 3px; left: 3px;
-    width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: transform 0.2s;
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 15px; height: 15px; background: #666; border-radius: 50%; transition: transform 0.2s, background 0.2s;
   }
-  .toggle input:checked + .track { background: var(--accent); }
-  .toggle input:checked + .track::after { transform: translateX(18px); }
+  .toggle input:checked + .track { background: var(--accent); border-color: var(--accent); }
+  .toggle input:checked + .track::after { transform: translateX(17px); background: #fff; }
 
   /* Slider */
-  .slider-row { padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .slider-row { padding: 8px 0; border-bottom: 1px solid #1f1410; }
   .slider-row:last-child { border-bottom: none; }
-  .slider-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
-  .slider-val { color: var(--accent); font-weight: 600; font-size: 13px; }
+  .slider-header { display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 13px; }
+  .slider-val { color: var(--accent); font-weight: 700; font-size: 12px; }
   input[type=range] {
-    width: 100%; accent-color: var(--accent); height: 4px; cursor: pointer; background: var(--bg4); border-radius: 2px;
+    width: 100%; height: 4px; cursor: pointer; background: var(--bg4); border-radius: 2px;
+    -webkit-appearance: none; appearance: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 6px rgba(255,106,0,0.5); cursor: pointer;
   }
 
   /* Select */
   select {
-    background: var(--bg3); color: var(--text); border: 1px solid var(--border); border-radius: 7px;
-    padding: 6px 10px; font-size: 13px; cursor: pointer; outline: none;
+    background: var(--bg3); color: var(--text); border: 1px solid #3a2010; border-radius: 7px;
+    padding: 5px 9px; font-size: 12px; cursor: pointer; outline: none; font-family: inherit;
   }
   select:focus { border-color: var(--accent); }
 
-  /* Players table */
-  .player-list { display: flex; flex-direction: column; gap: 8px; }
+  /* Action button */
+  .btn-action {
+    padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 700;
+    cursor: pointer; border: none; background: var(--accent); color: #fff;
+    transition: opacity 0.2s; box-shadow: 0 0 8px rgba(255,106,0,0.3);
+  }
+  .btn-action:hover { opacity: 0.85; }
+
+  /* Players */
+  .player-list { display: flex; flex-direction: column; gap: 7px; }
   .player-row {
-    background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg2); border: 1px solid #2a1a0a; border-radius: 9px;
     padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;
   }
-  .player-name { font-weight: 600; font-size: 14px; }
-  .player-id { color: var(--muted); font-size: 12px; }
-  .player-actions { display: flex; gap: 6px; }
+  .player-name { font-weight: 700; font-size: 13px; }
+  .player-meta { color: var(--muted); font-size: 11px; margin-top: 1px; }
+  .player-actions { display: flex; gap: 5px; flex-shrink: 0; }
   .btn-sm {
-    padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;
+    padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;
     cursor: pointer; border: none; transition: opacity 0.2s;
   }
-  .btn-sm:hover { opacity: 0.8; }
   .btn-tp { background: var(--accent); color: #fff; }
-  .btn-friend { background: var(--bg4); color: var(--text); border: 1px solid var(--border); }
+  .btn-friend { background: var(--bg4); color: var(--text); border: 1px solid #3a2010; }
+  .btn-sm:hover { opacity: 0.8; }
   #no-players { color: var(--muted); font-size: 13px; padding: 16px 0; }
+
+  /* halloween pumpkin accent on section headers */
+  .page-title::after { content: ' 🎃'; font-size: 16px; }
 
   @media (max-width: 600px) {
     :root { --sidebar-w: 0px; }
-    #sidebar { transform: translateX(-200px); transition: transform 0.2s; }
-    #sidebar.open { transform: translateX(0); width: 200px; }
-    .hamburger { display: flex; }
+    #sidebar { transform: translateX(-210px); }
     #main { margin-left: 0; }
   }
 </style>
@@ -191,14 +223,16 @@
 
 <!-- ── PAIR SCREEN ── -->
 <div id="pair-screen">
-  <div class="logo">☘ Clover</div>
-  <div class="sub">Remote Cheat Control</div>
+  <img class="pair-logo" id="logo-img" src="logo.png" alt="Clover" onerror="this.style.display='none';document.getElementById('logo-fallback').style.display='block'">
+  <div class="pair-logo-fallback" id="logo-fallback" style="display:none">🍀</div>
+  <div class="brand">Clover</div>
+  <div class="sub">Remote Control · Scan the QR code and enter your pairing code</div>
   <div class="card">
-    <div style="font-size:15px;font-weight:600;">Voer je koppelcode in</div>
-    <div style="color:var(--muted);font-size:13px;">De code staat in het cheat menu onder Web Menu.</div>
+    <div style="font-size:15px;font-weight:700;">Enter Pairing Code</div>
+    <div style="color:var(--muted);font-size:12px;">The code is shown in the cheat menu under Web Menu.</div>
     <input id="code-input" type="text" maxlength="8" placeholder="XXXXXXXX" autocomplete="off" spellcheck="false">
     <div id="pair-err"></div>
-    <button class="btn-primary" onclick="doPair()">Verbinden</button>
+    <button class="btn-primary" onclick="doPair()">🔓 Connect</button>
   </div>
 </div>
 
@@ -206,35 +240,36 @@
 <div id="app">
   <div id="sidebar">
     <div class="logo-bar">
-      <div class="logo-dot">☘</div>
+      <img id="sidebar-logo" src="logo.png" alt="" onerror="this.style.display='none';document.getElementById('sidebar-logo-fallback').style.display='block'">
+      <span class="logo-fallback" id="sidebar-logo-fallback" style="display:none">🍀</span>
       <div>
         <div class="logo-text">Clover</div>
         <div class="logo-sub">Remote Control</div>
       </div>
     </div>
     <nav>
-      <a class="active" onclick="showPage('aim')" id="nav-aim"><span class="icon">🎯</span> Aim</a>
+      <a class="active" onclick="showPage('aim')"     id="nav-aim">    <span class="icon">🎯</span> Aim</a>
       <a onclick="showPage('visuals')" id="nav-visuals"><span class="icon">👁</span> Visuals</a>
-      <a onclick="showPage('self')" id="nav-self"><span class="icon">🛡</span> Self</a>
-      <a onclick="showPage('vehicle')" id="nav-vehicle"><span class="icon">🚗</span> Voertuig</a>
-      <a onclick="showPage('misc')" id="nav-misc"><span class="icon">⚙️</span> Misc</a>
-      <a onclick="showPage('players')" id="nav-players"><span class="icon">👥</span> Spelers</a>
+      <a onclick="showPage('self')"    id="nav-self">   <span class="icon">🛡</span> Self</a>
+      <a onclick="showPage('vehicle')" id="nav-vehicle"><span class="icon">🚗</span> Vehicle</a>
+      <a onclick="showPage('misc')"    id="nav-misc">   <span class="icon">⚙️</span> Misc</a>
+      <a onclick="showPage('players')" id="nav-players"><span class="icon">👥</span> Players</a>
     </nav>
     <div class="session-box">
-      <div class="session-label">Sessie</div>
-      <div class="status-dot"><div class="dot" id="conn-dot"></div><span id="conn-text">Verbinden...</span></div>
+      <div class="session-label">Session</div>
+      <div class="status-dot"><div class="dot" id="conn-dot"></div><span id="conn-text">Connecting...</span></div>
       <button class="btn-destruct" onclick="sendAction('destruct')">💣 Destruct</button>
-      <button class="btn-unload" onclick="sendAction('unload')">⏏ Unload</button>
+      <button class="btn-unload"   onclick="sendAction('unload')">⏏ Unload</button>
     </div>
   </div>
 
   <div id="main">
 
-    <!-- AIM -->
+    <!-- ══ AIM ══ -->
     <div class="page active" id="page-aim">
       <div class="page-header">
         <div class="page-title">Aim</div>
-        <div class="page-sub">Aimbot, Silent Aim, Triggerbot en Assist instellingen</div>
+        <div class="page-sub">Aimbot, Silent Aim, Triggerbot and Assist settings</div>
         <div class="sync-badge"><div class="dot connected"></div> Live sync</div>
       </div>
       <div class="tabs">
@@ -248,10 +283,17 @@
         <div class="cards">
           <div class="card">
             <div class="card-title">AIM ASSIST</div>
-            <div class="opt"><div class="opt-label">Enable Aimbot</div><label class="toggle"><input type="checkbox" onchange="send('aimBot',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Sticky Aimbot<small>Blijft op target gericht</small></div><label class="toggle"><input type="checkbox" onchange="send('stickyAimbot',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Draw FOV Circle</div><label class="toggle"><input type="checkbox" onchange="send('drawAimbotFov',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Dynamic FOV</div><label class="toggle"><input type="checkbox" onchange="send('dynamicAimbotFov',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Enable Aimbot</div><label class="toggle"><input type="checkbox" onchange="send('aimBot',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Sticky Aimbot</div><label class="toggle"><input type="checkbox" onchange="send('stickyAimbot',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Draw FOV Circle</div><label class="toggle"><input type="checkbox" onchange="send('drawAimbotFov',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Dynamic FOV</div><label class="toggle"><input type="checkbox" onchange="send('dynamicAimbotFov',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Show Preview</div><label class="toggle"><input type="checkbox" onchange="send('showAimPreview',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt">
+              <div class="opt-label">Aim Style</div>
+              <select onchange="send('aimStyle',this.selectedIndex)">
+                <option>Linear</option><option>Smooth</option><option>Bezier</option>
+              </select>
+            </div>
             <div class="slider-row">
               <div class="slider-header"><span>FOV</span><span class="slider-val" id="v-aimBotFov">50</span></div>
               <input type="range" min="1" max="300" value="50" oninput="slideSet('aimBotFov',this)">
@@ -266,15 +308,15 @@
             </div>
           </div>
           <div class="card">
-            <div class="card-title">AIM INSTELLINGEN</div>
-            <div class="opt"><div class="opt-label">Alleen Zichtbaar</div><label class="toggle"><input type="checkbox" onchange="send('onlyVisibleAim',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Negeer Ped</div><label class="toggle"><input type="checkbox" onchange="send('ignorePed',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Negeer Doden</div><label class="toggle"><input type="checkbox" onchange="send('ignoreDeath',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Negeer Friends</div><label class="toggle"><input type="checkbox" onchange="send('ignoreFriends',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Wave Shield Bypass</div><label class="toggle"><input type="checkbox" onchange="send('waveShieldBypass',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="card-title">AIM SETTINGS</div>
+            <div class="opt"><div class="opt-label">Only Visible</div><label class="toggle"><input type="checkbox" onchange="send('onlyVisible',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Ignore Ped</div><label class="toggle"><input type="checkbox" onchange="send('ignorePed',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Ignore Dead</div><label class="toggle"><input type="checkbox" onchange="send('ignoreDeath',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Ignore Friends</div><label class="toggle"><input type="checkbox" onchange="send('ignoreFriends',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Wave Shield Bypass</div><label class="toggle"><input type="checkbox" onchange="send('waveShieldBypass',+this.checked)"><div class="track"></div></label></div>
             <div class="slider-row">
-              <div class="slider-header"><span>Max Afstand</span><span class="slider-val" id="v-aimDist">500</span></div>
-              <input type="range" min="10" max="1000" value="500" oninput="slideSet('aimDist',this)">
+              <div class="slider-header"><span>Max Distance</span><span class="slider-val" id="v-aimDistance">500</span></div>
+              <input type="range" min="10" max="1000" value="500" oninput="slideSet('aimDistance',this)">
             </div>
           </div>
         </div>
@@ -284,19 +326,21 @@
         <div class="cards">
           <div class="card">
             <div class="card-title">SILENT AIM</div>
-            <div class="opt"><div class="opt-label">Silent Aim<small>Onzichtbaar naar doel buigen</small></div><label class="toggle"><input type="checkbox" onchange="send('silent',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Dynamic Silent FOV</div><label class="toggle"><input type="checkbox" onchange="send('dynamicSilentFov',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Magic Bullets</div><label class="toggle"><input type="checkbox" onchange="send('magicBullets',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Silent Aim</div><label class="toggle"><input type="checkbox" onchange="send('silent',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Draw FOV Circle</div><label class="toggle"><input type="checkbox" onchange="send('drawSilentFov',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Dynamic Silent FOV</div><label class="toggle"><input type="checkbox" onchange="send('dynamicSilentFov',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Magic Bullets</div><label class="toggle"><input type="checkbox" onchange="send('magicBullets',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Show Preview</div><label class="toggle"><input type="checkbox" onchange="send('showSilentPreview',+this.checked)"><div class="track"></div></label></div>
             <div class="slider-row">
               <div class="slider-header"><span>Silent FOV</span><span class="slider-val" id="v-silentFov">30</span></div>
               <input type="range" min="1" max="200" value="30" oninput="slideSet('silentFov',this)">
             </div>
             <div class="slider-row">
-              <div class="slider-header"><span>Silent FOV Hoogte</span><span class="slider-val" id="v-silentFovHeight">30</span></div>
+              <div class="slider-header"><span>Silent FOV Height</span><span class="slider-val" id="v-silentFovHeight">30</span></div>
               <input type="range" min="1" max="200" value="30" oninput="slideSet('silentFovHeight',this)">
             </div>
             <div class="slider-row">
-              <div class="slider-header"><span>Hit Kans (%)</span><span class="slider-val" id="v-silentHitChance">80</span></div>
+              <div class="slider-header"><span>Hit Chance (%)</span><span class="slider-val" id="v-silentHitChance">80</span></div>
               <input type="range" min="1" max="100" value="80" oninput="slideSet('silentHitChance',this)">
             </div>
           </div>
@@ -307,13 +351,15 @@
         <div class="cards">
           <div class="card">
             <div class="card-title">TRIGGERBOT</div>
-            <div class="opt"><div class="opt-label">Triggerbot<small>Auto-schieten bij crosshair op target</small></div><label class="toggle"><input type="checkbox" onchange="send('triggerBot',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Triggerbot</div><label class="toggle"><input type="checkbox" onchange="send('triggerBot',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Draw Trigger FOV</div><label class="toggle"><input type="checkbox" onchange="send('drawTriggerFov',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Show Preview</div><label class="toggle"><input type="checkbox" onchange="send('showTriggerPreview',+this.checked)"><div class="track"></div></label></div>
             <div class="slider-row">
               <div class="slider-header"><span>Trigger FOV</span><span class="slider-val" id="v-triggerFov">10</span></div>
               <input type="range" min="1" max="100" value="10" oninput="slideSet('triggerFov',this)">
             </div>
             <div class="slider-row">
-              <div class="slider-header"><span>Vertraging (ms)</span><span class="slider-val" id="v-triggerDelay">50</span></div>
+              <div class="slider-header"><span>Delay (ms)</span><span class="slider-val" id="v-triggerDelay">50</span></div>
               <input type="range" min="0" max="500" value="50" oninput="slideSet('triggerDelay',this)">
             </div>
           </div>
@@ -324,67 +370,90 @@
         <div class="cards">
           <div class="card">
             <div class="card-title">AIM ASSIST</div>
-            <div class="opt"><div class="opt-label">Aim Assist</div><label class="toggle"><input type="checkbox" onchange="send('aimAssist',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Alleen Zichtbaar</div><label class="toggle"><input type="checkbox" onchange="send('aimAssistOnlyVisible',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Negeer Ped</div><label class="toggle"><input type="checkbox" onchange="send('aimAssistIgnorePed',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Negeer Doden</div><label class="toggle"><input type="checkbox" onchange="send('aimAssistIgnoreDead',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Negeer Friends</div><label class="toggle"><input type="checkbox" onchange="send('aimAssistIgnoreFriends',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Aim Assist</div><label class="toggle"><input type="checkbox" onchange="send('aimAssist',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Draw Assist FOV</div><label class="toggle"><input type="checkbox" onchange="send('drawAssistFov',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Only Visible</div><label class="toggle"><input type="checkbox" onchange="send('aimAssistOnlyVisible',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Ignore Ped</div><label class="toggle"><input type="checkbox" onchange="send('aimAssistIgnorePed',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Ignore Dead</div><label class="toggle"><input type="checkbox" onchange="send('aimAssistIgnoreDead',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Ignore Friends</div><label class="toggle"><input type="checkbox" onchange="send('aimAssistIgnoreFriends',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Show Preview</div><label class="toggle"><input type="checkbox" onchange="send('showAssistPreview',+this.checked)"><div class="track"></div></label></div>
             <div class="slider-row">
               <div class="slider-header"><span>FOV</span><span class="slider-val" id="v-aimAssistFov">50</span></div>
               <input type="range" min="1" max="300" value="50" oninput="slideSet('aimAssistFov',this)">
             </div>
             <div class="slider-row">
-              <div class="slider-header"><span>Max Afstand</span><span class="slider-val" id="v-aimAssistDistance">500</span></div>
+              <div class="slider-header"><span>Max Distance</span><span class="slider-val" id="v-aimAssistDistance">500</span></div>
               <input type="range" min="10" max="1000" value="500" oninput="slideSet('aimAssistDistance',this)">
+            </div>
+            <div class="slider-row">
+              <div class="slider-header"><span>Strength (%)</span><span class="slider-val" id="v-aimAssistStrength">50</span></div>
+              <input type="range" min="1" max="100" value="50" oninput="slideSet('aimAssistStrength',this)">
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- VISUALS -->
+    <!-- ══ VISUALS ══ -->
     <div class="page" id="page-visuals">
       <div class="page-header">
         <div class="page-title">Visuals</div>
-        <div class="page-sub">ESP, Radar en weergave opties</div>
+        <div class="page-sub">ESP, Radar and display options</div>
         <div class="sync-badge"><div class="dot connected"></div> Live sync</div>
       </div>
       <div class="tabs">
-        <button class="tab active" onclick="switchTab(this,'vis-esp')">ESP</button>
+        <button class="tab active" onclick="switchTab(this,'vis-esp')">Player ESP</button>
+        <button class="tab" onclick="switchTab(this,'vis-vehicle')">Vehicle ESP</button>
         <button class="tab" onclick="switchTab(this,'vis-radar')">Radar</button>
-        <button class="tab" onclick="switchTab(this,'vis-crosshair')">Crosshair</button>
+        <button class="tab" onclick="switchTab(this,'vis-crosshair')">Crosshair / FOV</button>
       </div>
       <div id="vis-esp">
         <div class="cards">
           <div class="card">
-            <div class="card-title">SPELER ESP</div>
-            <div class="opt"><div class="opt-label">Box ESP</div><label class="toggle"><input type="checkbox" onchange="send('boxEsp',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Skeleton ESP</div><label class="toggle"><input type="checkbox" onchange="send('skeletonEsp',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Naam ESP</div><label class="toggle"><input type="checkbox" onchange="send('nameEsp',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Health Bar</div><label class="toggle"><input type="checkbox" onchange="send('healthBar',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Armor Bar</div><label class="toggle"><input type="checkbox" onchange="send('armorBar',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Afstand ESP</div><label class="toggle"><input type="checkbox" onchange="send('distanceEsp',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Hoofd Cirkel</div><label class="toggle"><input type="checkbox" onchange="send('headCircleEsp',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Wapen ESP</div><label class="toggle"><input type="checkbox" onchange="send('weaponEsp',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Snapline</div><label class="toggle"><input type="checkbox" onchange="send('directionEsp',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Flags ESP</div><label class="toggle"><input type="checkbox" onchange="send('flagsEsp',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Hoed ESP</div><label class="toggle"><input type="checkbox" onchange="send('hatEsp',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Negeer Ped</div><label class="toggle"><input type="checkbox" onchange="send('ignorePed_esp',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Negeer Doden</div><label class="toggle"><input type="checkbox" onchange="send('ignoreDeath_esp',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="card-title">PLAYER ESP</div>
+            <div class="opt"><div class="opt-label">ESP Toggle</div><label class="toggle"><input type="checkbox" onchange="send('espToggle',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Box ESP</div><label class="toggle"><input type="checkbox" onchange="send('boxEsp',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Skeleton ESP</div><label class="toggle"><input type="checkbox" onchange="send('skeletonEsp',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Name ESP</div><label class="toggle"><input type="checkbox" onchange="send('nameEsp',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Health Bar</div><label class="toggle"><input type="checkbox" onchange="send('healthBar',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Armor Bar</div><label class="toggle"><input type="checkbox" onchange="send('armorBar',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Distance ESP</div><label class="toggle"><input type="checkbox" onchange="send('distanceEsp',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Head Circle ESP</div><label class="toggle"><input type="checkbox" onchange="send('headCircleEsp',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Weapon ESP</div><label class="toggle"><input type="checkbox" onchange="send('weaponEsp',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Line ESP</div><label class="toggle"><input type="checkbox" onchange="send('lineEsp',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Flags ESP</div><label class="toggle"><input type="checkbox" onchange="send('flagsEsp',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Hat ESP</div><label class="toggle"><input type="checkbox" onchange="send('hatEsp',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Rainbow ESP</div><label class="toggle"><input type="checkbox" onchange="send('rainbowEsp',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Only Visible</div><label class="toggle"><input type="checkbox" onchange="send('onlyVisible_esp',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Ignore Ped</div><label class="toggle"><input type="checkbox" onchange="send('ignorePed_esp',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Ignore Dead</div><label class="toggle"><input type="checkbox" onchange="send('ignoreDeath_esp',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">ESP Outline</div><label class="toggle"><input type="checkbox" onchange="send('espOutline',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Player Info Panel</div><label class="toggle"><input type="checkbox" onchange="send('playerInfoPanel',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Players Looking Warning</div><label class="toggle"><input type="checkbox" onchange="send('playersLookingWarning',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Show Target Bones</div><label class="toggle"><input type="checkbox" onchange="send('showTargetBones',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Show ESP Preview</div><label class="toggle"><input type="checkbox" onchange="send('showEspPreview',+this.checked)"><div class="track"></div></label></div>
             <div class="slider-row">
-              <div class="slider-header"><span>Max Afstand</span><span class="slider-val" id="v-espDistance">500</span></div>
+              <div class="slider-header"><span>Max Distance</span><span class="slider-val" id="v-espDistance">500</span></div>
               <input type="range" min="10" max="1000" value="500" oninput="slideSet('espDistance',this)">
             </div>
           </div>
+        </div>
+      </div>
+      <div id="vis-vehicle" style="display:none">
+        <div class="cards">
           <div class="card">
-            <div class="card-title">VOERTUIG ESP</div>
-            <div class="opt"><div class="opt-label">Voertuig ESP</div><label class="toggle"><input type="checkbox" onchange="send('vehicleEsp',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Lokaal Voertuig</div><label class="toggle"><input type="checkbox" onchange="send('drawLocalVehicle',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Vijand Voertuig</div><label class="toggle"><input type="checkbox" onchange="send('drawEnemyVehicle',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Voertuig Gezondheid</div><label class="toggle"><input type="checkbox" onchange="send('vehicleHealt',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Voertuig Marker</div><label class="toggle"><input type="checkbox" onchange="send('vehicleMarker',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Voertuig Snapline</div><label class="toggle"><input type="checkbox" onchange="send('vehicleEspSnapline',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Voertuig Afstand</div><label class="toggle"><input type="checkbox" onchange="send('vehicleEspShowDistance',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="card-title">VEHICLE ESP</div>
+            <div class="opt"><div class="opt-label">Vehicle ESP</div><label class="toggle"><input type="checkbox" onchange="send('vehicleEsp',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Draw Local Vehicle</div><label class="toggle"><input type="checkbox" onchange="send('drawLocalVehicle',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Draw Enemy Vehicle</div><label class="toggle"><input type="checkbox" onchange="send('drawEnemyVehicle',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Vehicle Health</div><label class="toggle"><input type="checkbox" onchange="send('vehicleHealt',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Vehicle Marker</div><label class="toggle"><input type="checkbox" onchange="send('vehicleMarker',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Vehicle Snapline</div><label class="toggle"><input type="checkbox" onchange="send('vehicleEspSnapline',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Show Distance</div><label class="toggle"><input type="checkbox" onchange="send('vehicleEspShowDistance',+this.checked)"><div class="track"></div></label></div>
+            <div class="slider-row">
+              <div class="slider-header"><span>Max Distance</span><span class="slider-val" id="v-vehicleEspDistance">500</span></div>
+              <input type="range" min="10" max="1000" value="500" oninput="slideSet('vehicleEspDistance',this)">
+            </div>
           </div>
         </div>
       </div>
@@ -392,9 +461,18 @@
         <div class="cards">
           <div class="card">
             <div class="card-title">RADAR</div>
-            <div class="opt"><div class="opt-label">Radar ESP</div><label class="toggle"><input type="checkbox" onchange="send('radarEsp',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Voertuigen op Radar</div><label class="toggle"><input type="checkbox" onchange="send('radarVehicles',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Namen op Radar</div><label class="toggle"><input type="checkbox" onchange="send('radarNames',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Radar ESP</div><label class="toggle"><input type="checkbox" onchange="send('radarEsp',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Show Vehicles</div><label class="toggle"><input type="checkbox" onchange="send('radarShowVehicles',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Show Names</div><label class="toggle"><input type="checkbox" onchange="send('radarShowNames',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Rotate with Camera</div><label class="toggle"><input type="checkbox" onchange="send('radarRotateCamera',+this.checked)"><div class="track"></div></label></div>
+            <div class="slider-row">
+              <div class="slider-header"><span>Radar Size</span><span class="slider-val" id="v-radarSize">150</span></div>
+              <input type="range" min="50" max="400" value="150" oninput="slideSet('radarSize',this)">
+            </div>
+            <div class="slider-row">
+              <div class="slider-header"><span>Radar Zoom</span><span class="slider-val" id="v-radarZoom">100</span></div>
+              <input type="range" min="10" max="500" value="100" oninput="slideSet('radarZoom',this)">
+            </div>
           </div>
         </div>
       </div>
@@ -402,17 +480,17 @@
         <div class="cards">
           <div class="card">
             <div class="card-title">CROSSHAIR</div>
-            <div class="opt"><div class="opt-label">Crosshair</div><label class="toggle"><input type="checkbox" onchange="send('crosshair',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Crosshair</div><label class="toggle"><input type="checkbox" onchange="send('crossHair',+this.checked)"><div class="track"></div></label></div>
             <div class="slider-row">
-              <div class="slider-header"><span>Grootte</span><span class="slider-val" id="v-crosshairSize">10</span></div>
-              <input type="range" min="1" max="50" value="10" oninput="slideSet('crosshairSize',this)">
+              <div class="slider-header"><span>Size</span><span class="slider-val" id="v-crossHairSize">10</span></div>
+              <input type="range" min="1" max="50" value="10" oninput="slideSet('crossHairSize',this)">
             </div>
           </div>
           <div class="card">
             <div class="card-title">FOV CHANGER</div>
-            <div class="opt"><div class="opt-label">FOV Changer</div><label class="toggle"><input type="checkbox" onchange="send('fovChanger',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">FOV Changer</div><label class="toggle"><input type="checkbox" onchange="send('fovChanger',+this.checked)"><div class="track"></div></label></div>
             <div class="slider-row">
-              <div class="slider-header"><span>FOV Waarde</span><span class="slider-val" id="v-fovValue">70</span></div>
+              <div class="slider-header"><span>FOV Value</span><span class="slider-val" id="v-fovValue">70</span></div>
               <input type="range" min="40" max="120" value="70" oninput="slideSet('fovValue',this)">
             </div>
           </div>
@@ -420,182 +498,203 @@
       </div>
     </div>
 
-    <!-- SELF -->
+    <!-- ══ SELF ══ -->
     <div class="page" id="page-self">
       <div class="page-header">
         <div class="page-title">Self</div>
-        <div class="page-sub">Bescherming, wapens en beweging</div>
+        <div class="page-sub">Protection, weapons and movement</div>
         <div class="sync-badge"><div class="dot connected"></div> Live sync</div>
       </div>
       <div class="tabs">
-        <button class="tab active" onclick="switchTab(this,'self-prot')">Bescherming</button>
-        <button class="tab" onclick="switchTab(this,'self-weapons')">Wapens</button>
-        <button class="tab" onclick="switchTab(this,'self-move')">Beweging</button>
+        <button class="tab active" onclick="switchTab(this,'self-prot')">Protection</button>
+        <button class="tab" onclick="switchTab(this,'self-weapons')">Weapons</button>
+        <button class="tab" onclick="switchTab(this,'self-move')">Movement</button>
         <button class="tab" onclick="switchTab(this,'self-anti')">Anti</button>
       </div>
       <div id="self-prot">
         <div class="cards">
           <div class="card">
-            <div class="card-title">BESCHERMING</div>
-            <div class="opt"><div class="opt-label">God Mode<small>Onkwetsbaar</small></div><label class="toggle"><input type="checkbox" onchange="send('godMode',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Semi God Mode<small>Bijna onkwetsbaar</small></div><label class="toggle"><input type="checkbox" onchange="send('semiGodMode',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Onzichtbaar</div><label class="toggle"><input type="checkbox" onchange="send('invisible',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Anti Headshot</div><label class="toggle"><input type="checkbox" onchange="send('antiHeadshot',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Advanced Anti Headshot</div><label class="toggle"><input type="checkbox" onchange="send('advancedAntiHeadshot',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">No Ragdoll</div><label class="toggle"><input type="checkbox" onchange="send('noRagdoll',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">No Body Hits</div><label class="toggle"><input type="checkbox" onchange="send('noBodyHits',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Absorption</div><label class="toggle"><input type="checkbox" onchange="send('absorption',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Damage Reduction</div><label class="toggle"><input type="checkbox" onchange="send('damageReduction',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Untargetable</div><label class="toggle"><input type="checkbox" onchange="send('untargetable',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="card-title">PROTECTION</div>
+            <div class="opt"><div class="opt-label">God Mode</div><label class="toggle"><input type="checkbox" onchange="send('godMode',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Semi God Mode</div><label class="toggle"><input type="checkbox" onchange="send('semiGodMode',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Invisible</div><label class="toggle"><input type="checkbox" onchange="send('invisible',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Anti Headshot</div><label class="toggle"><input type="checkbox" onchange="send('antiHeadshot',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Advanced Anti Headshot</div><label class="toggle"><input type="checkbox" onchange="send('advancedAntiHeadshot',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">No Ragdoll</div><label class="toggle"><input type="checkbox" onchange="send('noRagdoll',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">No Body Hits</div><label class="toggle"><input type="checkbox" onchange="send('noBodyHits',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Absorption</div><label class="toggle"><input type="checkbox" onchange="send('absorption',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Damage Reduction</div><label class="toggle"><input type="checkbox" onchange="send('damageReduction',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Untargetable</div><label class="toggle"><input type="checkbox" onchange="send('untargetable',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Phase Mode</div><label class="toggle"><input type="checkbox" onchange="send('phaseMode',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Shrink</div><label class="toggle"><input type="checkbox" onchange="send('shrink',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Wave Shield Bypass (Self)</div><label class="toggle"><input type="checkbox" onchange="send('waveShieldBypassSelf',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Health Boost</div><label class="toggle"><input type="checkbox" onchange="send('healthBoost',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Armor Boost</div><label class="toggle"><input type="checkbox" onchange="send('armorBoost',+this.checked)"><div class="track"></div></label></div>
           </div>
         </div>
       </div>
       <div id="self-weapons" style="display:none">
         <div class="cards">
           <div class="card">
-            <div class="card-title">WAPENS</div>
-            <div class="opt"><div class="opt-label">Oneindige Munitie</div><label class="toggle"><input type="checkbox" onchange="send('infiniteAmmo',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">No Recoil</div><label class="toggle"><input type="checkbox" onchange="send('noRecoil',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">No Spread</div><label class="toggle"><input type="checkbox" onchange="send('noSpread',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">No Reload</div><label class="toggle"><input type="checkbox" onchange="send('noReload',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Rapid Fire</div><label class="toggle"><input type="checkbox" onchange="send('rapidFire',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Explosieve Kogels</div><label class="toggle"><input type="checkbox" onchange="send('explosiveAmmo',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Schade Boost</div><label class="toggle"><input type="checkbox" onchange="send('damageBoost',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">One Punch</div><label class="toggle"><input type="checkbox" onchange="send('onePunch',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="card-title">WEAPONS</div>
+            <div class="opt"><div class="opt-label">Infinite Ammo</div><label class="toggle"><input type="checkbox" onchange="send('infiniteAmmo',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">No Recoil</div><label class="toggle"><input type="checkbox" onchange="send('noRecoil',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">No Spread</div><label class="toggle"><input type="checkbox" onchange="send('noSpread',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">No Reload</div><label class="toggle"><input type="checkbox" onchange="send('noReload',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">No Range</div><label class="toggle"><input type="checkbox" onchange="send('noRange',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Rapid Fire</div><label class="toggle"><input type="checkbox" onchange="send('rapidFire',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Explosive Ammo</div><label class="toggle"><input type="checkbox" onchange="send('explosiveAmmo',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Fire Ammo</div><label class="toggle"><input type="checkbox" onchange="send('fireAmmo',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Damage Boost</div><label class="toggle"><input type="checkbox" onchange="send('damageBoost',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">One Punch</div><label class="toggle"><input type="checkbox" onchange="send('onePunch',+this.checked)"><div class="track"></div></label></div>
           </div>
         </div>
       </div>
       <div id="self-move" style="display:none">
         <div class="cards">
           <div class="card">
-            <div class="card-title">BEWEGING</div>
-            <div class="opt"><div class="opt-label">No Clip<small>Door muren lopen</small></div><label class="toggle"><input type="checkbox" onchange="send('noClip',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Auto Strafe</div><label class="toggle"><input type="checkbox" onchange="send('autoStrafe',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Gravity Hack</div><label class="toggle"><input type="checkbox" onchange="send('gravityHack',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Peek Assist</div><label class="toggle"><input type="checkbox" onchange="send('peekAssist',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Parachute</div><label class="toggle"><input type="checkbox" onchange="send('parachute',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="card-title">MOVEMENT</div>
+            <div class="opt"><div class="opt-label">No Clip</div><label class="toggle"><input type="checkbox" onchange="send('noClip',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Auto Strafe</div><label class="toggle"><input type="checkbox" onchange="send('autoStrafe',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Gravity Hack</div><label class="toggle"><input type="checkbox" onchange="send('gravityHack',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Peek Assist</div><label class="toggle"><input type="checkbox" onchange="send('peekAssist',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Parachute</div><label class="toggle"><input type="checkbox" onchange="send('parachute',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Teleport to Waypoint</div><label class="toggle"><input type="checkbox" onchange="send('TeleportWaypoint',+this.checked)"><div class="track"></div></label></div>
           </div>
         </div>
       </div>
       <div id="self-anti" style="display:none">
         <div class="cards">
           <div class="card">
-            <div class="card-title">ANTI OPTIES</div>
-            <div class="opt"><div class="opt-label">Anti Godmode</div><label class="toggle"><input type="checkbox" onchange="send('antiGodmode',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Patch Enemy Anti Headshot</div><label class="toggle"><input type="checkbox" onchange="send('patchEnemyAntiHeadshot',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Patch Enemy Immortality</div><label class="toggle"><input type="checkbox" onchange="send('patchEnemyImmortality',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="card-title">ANTI OPTIONS</div>
+            <div class="opt"><div class="opt-label">Anti Godmode</div><label class="toggle"><input type="checkbox" onchange="send('antiGodmode',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Patch Enemy Anti Headshot</div><label class="toggle"><input type="checkbox" onchange="send('patchEnemyAntiHeadshot',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Patch Enemy Immortality</div><label class="toggle"><input type="checkbox" onchange="send('patchEnemyImmortality',+this.checked)"><div class="track"></div></label></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- VEHICLE -->
+    <!-- ══ VEHICLE ══ -->
     <div class="page" id="page-vehicle">
       <div class="page-header">
-        <div class="page-title">Voertuig</div>
-        <div class="page-sub">Bescherming, prestaties en acties</div>
+        <div class="page-title">Vehicle</div>
+        <div class="page-sub">Protection, performance and actions</div>
         <div class="sync-badge"><div class="dot connected"></div> Live sync</div>
       </div>
       <div class="tabs">
-        <button class="tab active" onclick="switchTab(this,'veh-prot')">Bescherming</button>
-        <button class="tab" onclick="switchTab(this,'veh-perf')">Prestaties</button>
-        <button class="tab" onclick="switchTab(this,'veh-action')">Acties</button>
+        <button class="tab active" onclick="switchTab(this,'veh-prot')">Protection</button>
+        <button class="tab" onclick="switchTab(this,'veh-perf')">Performance</button>
+        <button class="tab" onclick="switchTab(this,'veh-action')">Actions</button>
       </div>
       <div id="veh-prot">
         <div class="cards">
           <div class="card">
-            <div class="card-title">VOERTUIG BESCHERMING</div>
-            <div class="opt"><div class="opt-label">Voertuig God Mode</div><label class="toggle"><input type="checkbox" onchange="send('vehicleGodMode',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Auto Reparatie</div><label class="toggle"><input type="checkbox" onchange="send('vehicleAutoRepair',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Bullet-proof Banden</div><label class="toggle"><input type="checkbox" onchange="send('vehicleBulletProofTyres',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="card-title">VEHICLE PROTECTION</div>
+            <div class="opt"><div class="opt-label">Vehicle God Mode</div><label class="toggle"><input type="checkbox" onchange="send('vehicleGodMode',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Vehicle Auto Repair</div><label class="toggle"><input type="checkbox" onchange="send('vehicleAutoRepair',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Bullet-proof Tyres</div><label class="toggle"><input type="checkbox" onchange="send('vehicleBulletProofTyres',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Vehicle Engine Control</div><label class="toggle"><input type="checkbox" onchange="send('vehicleEngineControl',+this.checked)"><div class="track"></div></label></div>
           </div>
         </div>
       </div>
       <div id="veh-perf" style="display:none">
         <div class="cards">
           <div class="card">
-            <div class="card-title">PRESTATIES</div>
-            <div class="opt"><div class="opt-label">Speed Boost</div><label class="toggle"><input type="checkbox" onchange="send('vehicleSpeedBoost',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Shift Boost</div><label class="toggle"><input type="checkbox" onchange="send('vehicleShiftBoost',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Rocket Boost</div><label class="toggle"><input type="checkbox" onchange="send('rocketBoost',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Vehicle Jump</div><label class="toggle"><input type="checkbox" onchange="send('vehicleJump',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Extra Grip</div><label class="toggle"><input type="checkbox" onchange="send('vehicleExtraGrip',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Easy Handling</div><label class="toggle"><input type="checkbox" onchange="send('vehicleEasyHandling',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="card-title">PERFORMANCE</div>
+            <div class="opt"><div class="opt-label">Speed Boost</div><label class="toggle"><input type="checkbox" onchange="send('vehicleSpeedBoost',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Shift Boost</div><label class="toggle"><input type="checkbox" onchange="send('vehicleShiftBoost',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Rocket Boost</div><label class="toggle"><input type="checkbox" onchange="send('rocketBoost',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Vehicle Jump</div><label class="toggle"><input type="checkbox" onchange="send('vehicleJump',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Extra Grip</div><label class="toggle"><input type="checkbox" onchange="send('vehicleExtraGrip',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Easy Handling</div><label class="toggle"><input type="checkbox" onchange="send('vehicleEasyHandling',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Pulling Power</div><label class="toggle"><input type="checkbox" onchange="send('vehiclePullingPower',+this.checked)"><div class="track"></div></label></div>
+            <div class="slider-row">
+              <div class="slider-header"><span>Speed Amount</span><span class="slider-val" id="v-vehicleSpeedBoostAmount">50</span></div>
+              <input type="range" min="1" max="200" value="50" oninput="slideSet('vehicleSpeedBoostAmount',this)">
+            </div>
           </div>
         </div>
       </div>
       <div id="veh-action" style="display:none">
         <div class="cards">
           <div class="card">
-            <div class="card-title">ACTIES</div>
-            <div class="opt"><div class="opt-label">Quick Unlock</div><label class="toggle"><input type="checkbox" onchange="send('quickUnlock',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Steal Car</div><label class="toggle"><input type="checkbox" onchange="send('stealCar',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Vehicle Fix</div><label class="toggle"><input type="checkbox" onchange="send('vehicleFix',this.checked?1:0)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Vehicle Break</div><label class="toggle"><input type="checkbox" onchange="send('vehicleBreak',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="card-title">ACTIONS</div>
+            <div class="opt"><div class="opt-label">Quick Unlock</div><label class="toggle"><input type="checkbox" onchange="send('quickUnlock',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Steal Car</div><label class="toggle"><input type="checkbox" onchange="send('stealCar',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Vehicle Fix (on key)</div><label class="toggle"><input type="checkbox" onchange="send('vehicleFix',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Vehicle Break (on key)</div><label class="toggle"><input type="checkbox" onchange="send('vehicleBreak',+this.checked)"><div class="track"></div></label></div>
             <div class="opt" style="justify-content:flex-start;gap:12px;flex-wrap:wrap;">
-              <span class="opt-label">Repareer nu</span>
-              <button class="btn-sm btn-tp" onclick="send('vehicleFullRepairNow',1)">Repareer</button>
+              <span class="opt-label">Repair now</span>
+              <button class="btn-action" onclick="send('vehicleFullRepairNow',1)">Repair</button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- MISC -->
+    <!-- ══ MISC ══ -->
     <div class="page" id="page-misc">
       <div class="page-header">
         <div class="page-title">Misc</div>
-        <div class="page-sub">Wereld, sessie en overige opties</div>
+        <div class="page-sub">World, session and other options</div>
         <div class="sync-badge"><div class="dot connected"></div> Live sync</div>
       </div>
       <div class="cards">
         <div class="card">
-          <div class="card-title">WERELD</div>
-          <div class="opt"><div class="opt-label">Weer Changer</div><label class="toggle"><input type="checkbox" onchange="send('weatherChanger',this.checked?1:0)"><div class="track"></div></label></div>
+          <div class="card-title">WORLD</div>
+          <div class="opt"><div class="opt-label">Weather Changer</div><label class="toggle"><input type="checkbox" onchange="send('weatherChanger',+this.checked)"><div class="track"></div></label></div>
           <div class="opt">
-            <div class="opt-label">Weer Type</div>
-            <select onchange="send('weatherType',this.selectedIndex)">
-              <option>Helder</option><option>Bewolkt</option><option>Regen</option>
-              <option>Onweer</option><option>Mist</option><option>Sneeuw</option><option>Extra zon</option>
+            <div class="opt-label">Weather Type</div>
+            <select onchange="send('selectedWeather',this.selectedIndex)">
+              <option>Clear</option><option>Clouds</option><option>Rain</option>
+              <option>Thunder</option><option>Fog</option><option>Snow</option><option>Extra Sun</option>
             </select>
           </div>
+          <div class="opt"><div class="opt-label">Time Changer</div><label class="toggle"><input type="checkbox" onchange="send('timeChanger',+this.checked)"><div class="track"></div></label></div>
+          <div class="slider-row">
+            <div class="slider-header"><span>Time (Hour)</span><span class="slider-val" id="v-timeHour">12</span></div>
+            <input type="range" min="0" max="23" value="12" oninput="slideSet('timeHour',this)">
+          </div>
+          <div class="opt"><div class="opt-label">Sky Color Enabled</div><label class="toggle"><input type="checkbox" onchange="send('skyColorEnabled',+this.checked)"><div class="track"></div></label></div>
         </div>
         <div class="card">
-          <div class="card-title">SESSIE</div>
-          <div class="opt"><div class="opt-label">Solo Sessie<small>Alleen in lobby</small></div><label class="toggle"><input type="checkbox" onchange="send('soloSession',this.checked?1:0)"><div class="track"></div></label></div>
-          <div class="opt"><div class="opt-label">Stream Proof</div><label class="toggle"><input type="checkbox" onchange="send('streamProof',this.checked?1:0)"><div class="track"></div></label></div>
-          <div class="opt"><div class="opt-label">Block Input</div><label class="toggle"><input type="checkbox" onchange="send('blockInput',this.checked?1:0)"><div class="track"></div></label></div>
-          <div class="opt"><div class="opt-label">Watermark</div><label class="toggle"><input type="checkbox" onchange="send('watermarkEnabled',this.checked?1:0)"><div class="track"></div></label></div>
+          <div class="card-title">SESSION</div>
+          <div class="opt"><div class="opt-label">Solo Session</div><label class="toggle"><input type="checkbox" onchange="send('soloSession',+this.checked)"><div class="track"></div></label></div>
+          <div class="opt"><div class="opt-label">Stream Proof</div><label class="toggle"><input type="checkbox" onchange="send('streamProof',+this.checked)"><div class="track"></div></label></div>
+          <div class="opt"><div class="opt-label">Block Input</div><label class="toggle"><input type="checkbox" onchange="send('blockInput',+this.checked)"><div class="track"></div></label></div>
+          <div class="opt"><div class="opt-label">Watermark</div><label class="toggle"><input type="checkbox" onchange="send('watermarkEnabled',+this.checked)"><div class="track"></div></label></div>
         </div>
         <div class="card">
           <div class="card-title">FAKE LAG / FPS</div>
-          <div class="opt"><div class="opt-label">Fake Lag</div><label class="toggle"><input type="checkbox" onchange="send('fakeLag',this.checked?1:0)"><div class="track"></div></label></div>
+          <div class="opt"><div class="opt-label">Fake Lag</div><label class="toggle"><input type="checkbox" onchange="send('fakeLag',+this.checked)"><div class="track"></div></label></div>
           <div class="slider-row">
-            <div class="slider-header"><span>Fake Lag Vertraging</span><span class="slider-val" id="v-fakeLagDelay">50</span></div>
+            <div class="slider-header"><span>Fake Lag Delay</span><span class="slider-val" id="v-fakeLagDelay">50</span></div>
             <input type="range" min="0" max="500" value="50" oninput="slideSet('fakeLagDelay',this)">
           </div>
-          <div class="opt"><div class="opt-label">Fake FPS</div><label class="toggle"><input type="checkbox" onchange="send('fakeFps',this.checked?1:0)"><div class="track"></div></label></div>
+          <div class="opt"><div class="opt-label">Fake FPS</div><label class="toggle"><input type="checkbox" onchange="send('fakeFps',+this.checked)"><div class="track"></div></label></div>
           <div class="slider-row">
             <div class="slider-header"><span>FPS Target</span><span class="slider-val" id="v-fakeFpsTarget">60</span></div>
             <input type="range" min="1" max="300" value="60" oninput="slideSet('fakeFpsTarget',this)">
           </div>
+          <div class="opt"><div class="opt-label">Fake FPS Range</div><label class="toggle"><input type="checkbox" onchange="send('fakeFpsRange',+this.checked)"><div class="track"></div></label></div>
         </div>
       </div>
     </div>
 
-    <!-- PLAYERS -->
+    <!-- ══ PLAYERS ══ -->
     <div class="page" id="page-players">
       <div class="page-header">
-        <div class="page-title">Spelers</div>
-        <div class="page-sub">Teleporteer, voeg toe als vriend, voertuig acties</div>
+        <div class="page-title">Players</div>
+        <div class="page-sub">Teleport, friends and vehicle actions</div>
         <div class="sync-badge"><div class="dot connected"></div> Live sync</div>
       </div>
-      <div id="no-players">Geen spelers gevonden. Zorg dat de cheat actief is.</div>
+      <div id="no-players" style="color:var(--muted);font-size:13px;padding:16px 0;">No players found. Make sure the cheat is active.</div>
       <div class="player-list" id="player-list"></div>
     </div>
 
-  </div><!-- /main -->
-</div><!-- /app -->
+  </div>
+</div>
 
 <script>
 const params = new URLSearchParams(location.search);
@@ -603,23 +702,17 @@ let SESSION = params.get('session') || '';
 let CODE    = '';
 let paired  = false;
 
-// ── PAIRING ──────────────────────────────────────────────────────────
+// ── PAIRING ───────────────────────────────────────────────────────────
 async function doPair() {
   const input = document.getElementById('code-input').value.trim().toUpperCase();
   const err   = document.getElementById('pair-err');
   err.textContent = '';
-  if (!input || input.length < 6) { err.textContent = 'Voer een geldige code in.'; return; }
-
-  // We need a session — check if we have one from URL params, else ask
-  if (!SESSION) {
-    err.textContent = 'Geen sessie gevonden. Scan de QR-code opnieuw.';
-    return;
-  }
-
+  if (!input || input.length < 6) { err.textContent = 'Enter a valid code.'; return; }
+  if (!SESSION) { err.textContent = 'No session found. Scan the QR code again.'; return; }
   try {
     const r = await fetch(`/api/menu/state?session=${SESSION}&code=${input}`);
     const d = await r.json();
-    if (!r.ok || d.error) { err.textContent = d.error || 'Verkeerde code.'; return; }
+    if (!r.ok || d.error) { err.textContent = d.error || 'Wrong code.'; return; }
     CODE = input;
     paired = true;
     applyState(d.state || {});
@@ -627,85 +720,86 @@ async function doPair() {
     document.getElementById('app').style.display = 'flex';
     startSync();
   } catch(e) {
-    err.textContent = 'Kon geen verbinding maken met de server.';
+    err.textContent = 'Could not connect to server.';
   }
 }
-
 document.getElementById('code-input').addEventListener('keydown', e => { if (e.key === 'Enter') doPair(); });
 
-// ── STATE SYNC ───────────────────────────────────────────────────────
-let syncInterval = null;
-
+// ── SYNC ──────────────────────────────────────────────────────────────
 function startSync() {
   setSync(true);
-  syncInterval = setInterval(async () => {
+  setInterval(async () => {
     try {
       const r = await fetch(`/api/menu/state?session=${SESSION}&code=${CODE}`);
       if (!r.ok) { setSync(false); return; }
       const d = await r.json();
       setSync(true);
-      applyState(d.state || {});
-      updatePlayers(d.state?.players || []);
+      if (d.state) {
+        applyState(d.state);
+        updatePlayers(d.state.players || []);
+      }
     } catch { setSync(false); }
   }, 1000);
 }
 
 function setSync(on) {
   document.getElementById('conn-dot').className = 'dot' + (on ? ' connected' : '');
-  document.getElementById('conn-text').textContent = on ? 'Verbonden' : 'Verbroken';
+  document.getElementById('conn-text').textContent = on ? 'Connected' : 'Disconnected';
 }
 
+// ── APPLY STATE ───────────────────────────────────────────────────────
 function applyState(s) {
-  const map = {
-    aimBot:'aimBot', stickyAimbot:'stickyAimbot', drawAimbotFov:'drawAimbotFov',
-    dynamicAimbotFov:'dynamicAimbotFov', ignorePed:'ignorePed', ignoreDeath:'ignoreDeath',
-    ignoreFriends:'ignoreFriends', waveShieldBypass:'waveShieldBypass',
-    silent:'silent', dynamicSilentFov:'dynamicSilentFov', magicBullets:'magicBullets',
-    triggerBot:'triggerBot', aimAssist:'aimAssist', aimAssistOnlyVisible:'aimAssistOnlyVisible',
-    aimAssistIgnorePed:'aimAssistIgnorePed', aimAssistIgnoreDead:'aimAssistIgnoreDead',
-    aimAssistIgnoreFriends:'aimAssistIgnoreFriends',
-    boxEsp:'boxEsp', skeletonEsp:'skeletonEsp', nameEsp:'nameEsp', healthBar:'healthBar',
-    armorBar:'armorBar', distanceEsp:'distanceEsp', headCircleEsp:'headCircleEsp',
-    weaponEsp:'weaponEsp', directionEsp:'directionEsp', flagsEsp:'flagsEsp', hatEsp:'hatEsp',
-    ignorePed_esp:'ignorePed_esp', ignoreDeath_esp:'ignoreDeath_esp',
-    vehicleEsp:'vehicleEsp', drawLocalVehicle:'drawLocalVehicle', drawEnemyVehicle:'drawEnemyVehicle',
-    vehicleHealt:'vehicleHealt', vehicleMarker:'vehicleMarker', vehicleEspSnapline:'vehicleEspSnapline',
-    vehicleEspShowDistance:'vehicleEspShowDistance',
-    godMode:'godMode', semiGodMode:'semiGodMode', invisible:'invisible',
-    antiHeadshot:'antiHeadshot', advancedAntiHeadshot:'advancedAntiHeadshot',
-    noRagdoll:'noRagdoll', noBodyHits:'noBodyHits', absorption:'absorption',
-    damageReduction:'damageReduction', untargetable:'untargetable',
-    infiniteAmmo:'infiniteAmmo', noRecoil:'noRecoil', noSpread:'noSpread',
-    noReload:'noReload', rapidFire:'rapidFire', explosiveAmmo:'explosiveAmmo',
-    damageBoost:'damageBoost', onePunch:'onePunch', noClip:'noClip', autoStrafe:'autoStrafe',
-    gravityHack:'gravityHack', peekAssist:'peekAssist', parachute:'parachute',
-    antiGodmode:'antiGodmode', patchEnemyAntiHeadshot:'patchEnemyAntiHeadshot',
-    patchEnemyImmortality:'patchEnemyImmortality',
-    vehicleGodMode:'vehicleGodMode', vehicleAutoRepair:'vehicleAutoRepair',
-    vehicleBulletProofTyres:'vehicleBulletProofTyres', vehicleSpeedBoost:'vehicleSpeedBoost',
-    vehicleShiftBoost:'vehicleShiftBoost', rocketBoost:'rocketBoost', vehicleJump:'vehicleJump',
-    vehicleExtraGrip:'vehicleExtraGrip', vehicleEasyHandling:'vehicleEasyHandling',
-    quickUnlock:'quickUnlock', stealCar:'stealCar', vehicleFix:'vehicleFix', vehicleBreak:'vehicleBreak',
-    soloSession:'soloSession', streamProof:'streamProof', blockInput:'blockInput',
-    watermarkEnabled:'watermarkEnabled', fakeLag:'fakeLag', fakeFps:'fakeFps',
-    fovChanger:'fovChanger', weatherChanger:'weatherChanger', radarEsp:'radarEsp',
-    radarVehicles:'radarVehicles', radarNames:'radarNames', crosshair:'crosshair',
-  };
-  for (const [k] of Object.entries(map)) {
+  // Toggles: match by key in onchange attribute
+  const toggleKeys = [
+    'aimBot','stickyAimbot','drawAimbotFov','dynamicAimbotFov','showAimPreview',
+    'onlyVisible','ignorePed','ignoreDeath','ignoreFriends','waveShieldBypass',
+    'silent','drawSilentFov','dynamicSilentFov','magicBullets','showSilentPreview',
+    'triggerBot','drawTriggerFov','showTriggerPreview',
+    'aimAssist','drawAssistFov','aimAssistOnlyVisible','aimAssistIgnorePed',
+    'aimAssistIgnoreDead','aimAssistIgnoreFriends','showAssistPreview',
+    'espToggle','boxEsp','skeletonEsp','nameEsp','healthBar','armorBar',
+    'distanceEsp','headCircleEsp','weaponEsp','lineEsp','flagsEsp','hatEsp',
+    'rainbowEsp','onlyVisible_esp','ignorePed_esp','ignoreDeath_esp',
+    'espOutline','playerInfoPanel','playersLookingWarning','showTargetBones','showEspPreview',
+    'vehicleEsp','drawLocalVehicle','drawEnemyVehicle','vehicleHealt',
+    'vehicleMarker','vehicleEspSnapline','vehicleEspShowDistance',
+    'godMode','semiGodMode','invisible','antiHeadshot','advancedAntiHeadshot',
+    'noRagdoll','noBodyHits','absorption','damageReduction','untargetable',
+    'phaseMode','shrink','waveShieldBypassSelf','healthBoost','armorBoost',
+    'infiniteAmmo','noRecoil','noSpread','noReload','noRange','rapidFire',
+    'explosiveAmmo','fireAmmo','damageBoost','onePunch',
+    'noClip','autoStrafe','gravityHack','peekAssist','parachute','TeleportWaypoint',
+    'antiGodmode','patchEnemyAntiHeadshot','patchEnemyImmortality',
+    'vehicleGodMode','vehicleAutoRepair','vehicleBulletProofTyres','vehicleEngineControl',
+    'vehicleSpeedBoost','vehicleShiftBoost','rocketBoost','vehicleJump',
+    'vehicleExtraGrip','vehicleEasyHandling','vehiclePullingPower',
+    'quickUnlock','stealCar','vehicleFix','vehicleBreak',
+    'weatherChanger','timeChanger','skyColorEnabled','soloSession',
+    'streamProof','blockInput','watermarkEnabled',
+    'fakeLag','fakeFps','fakeFpsRange',
+    'fovChanger','crossHair',
+    'radarEsp','radarShowVehicles','radarShowNames','radarRotateCamera',
+  ];
+  for (const k of toggleKeys) {
     if (s[k] !== undefined) {
       const el = document.querySelector(`input[onchange*="'${k}'"]`);
       if (el && el.type === 'checkbox') el.checked = !!s[k];
     }
   }
-  const sliders = {
+  // Sliders
+  const sliderKeys = {
     aimBotFov:'v-aimBotFov', smoothHorizontal:'v-smoothHorizontal', smoothVertical:'v-smoothVertical',
     silentFov:'v-silentFov', silentFovHeight:'v-silentFovHeight', silentHitChance:'v-silentHitChance',
     triggerFov:'v-triggerFov', triggerDelay:'v-triggerDelay',
-    aimAssistFov:'v-aimAssistFov', aimAssistDistance:'v-aimAssistDistance',
-    espDistance:'v-espDistance', crosshairSize:'v-crosshairSize', fovValue:'v-fovValue',
+    aimAssistFov:'v-aimAssistFov', aimAssistDistance:'v-aimAssistDistance', aimAssistStrength:'v-aimAssistStrength',
+    espDistance:'v-espDistance', vehicleEspDistance:'v-vehicleEspDistance',
+    radarSize:'v-radarSize', radarZoom:'v-radarZoom',
+    crossHairSize:'v-crossHairSize', fovValue:'v-fovValue',
     fakeLagDelay:'v-fakeLagDelay', fakeFpsTarget:'v-fakeFpsTarget',
+    vehicleSpeedBoostAmount:'v-vehicleSpeedBoostAmount', timeHour:'v-timeHour',
+    aimDistance:'v-aimDistance',
   };
-  for (const [k, id] of Object.entries(sliders)) {
+  for (const [k, id] of Object.entries(sliderKeys)) {
     if (s[k] !== undefined) {
       const el = document.querySelector(`input[oninput*="'${k}'"]`);
       if (el) el.value = s[k];
@@ -724,38 +818,43 @@ function updatePlayers(players) {
   none.style.display = 'none';
   list.innerHTML = players.map(p => `
     <div class="player-row">
-      <div><div class="player-name">${escHtml(p.name || 'Onbekend')}</div><div class="player-id">ID: ${p.id}</div></div>
+      <div>
+        <div class="player-name">${esc(p.name||'Unknown')}</div>
+        <div class="player-meta">ID: ${p.id} · ${p.dist||0}m${p.friend?' · 🤝 Friend':''}</div>
+      </div>
       <div class="player-actions">
         <button class="btn-sm btn-tp" onclick="send('playerTeleport',${p.id})">Teleport</button>
-        <button class="btn-sm btn-friend" onclick="send('playerToggleFriend',${p.id})">${p.isFriend?'❌ Vriend':'➕ Vriend'}</button>
+        <button class="btn-sm btn-friend" onclick="send('playerToggleFriend',${p.id})">${p.friend?'Remove Friend':'Add Friend'}</button>
       </div>
     </div>`).join('');
 }
 
-function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// ── SEND ─────────────────────────────────────────────────────────────
+// ── SEND ──────────────────────────────────────────────────────────────
 async function send(key, value) {
   if (!SESSION || !CODE) return;
   await fetch(`/api/menu/set?session=${SESSION}&code=${CODE}`, {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ key, value })
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({key, value})
   });
 }
 
 async function sendAction(action) {
   if (!SESSION || !CODE) return;
-  if (!confirm(`Weet je zeker dat je "${action}" wilt uitvoeren?`)) return;
-  await send(action, 1);
+  const label = action === 'destruct' ? 'Destruct (kills the cheat process)' : 'Unload (fully closes the cheat)';
+  if (!confirm(`Are you sure you want to: ${label}?`)) return;
+  // unload → unloadSafe to fully exit, destruct → destructSafe
+  const key = action === 'unload' ? 'unloadSafe' : 'destructSafe';
+  await send(key, 1);
 }
 
-let slideTimers = {};
+let st = {};
 function slideSet(key, el) {
-  const id = 'v-' + key;
-  const lbl = document.getElementById(id);
+  const lbl = document.getElementById('v-' + key);
   if (lbl) lbl.textContent = el.value;
-  clearTimeout(slideTimers[key]);
-  slideTimers[key] = setTimeout(() => send(key, parseInt(el.value)), 200);
+  clearTimeout(st[key]);
+  st[key] = setTimeout(() => send(key, parseInt(el.value)), 180);
 }
 
 // ── NAV ───────────────────────────────────────────────────────────────
@@ -770,14 +869,12 @@ function switchTab(btn, targetId) {
   const page = btn.closest('.page');
   page.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
-  const section = document.getElementById(targetId);
-  if (!section) return;
-  const siblings = section.parentElement.children;
-  for (const s of siblings) {
-    if (s.id && s.id !== targetId && !s.classList.contains('tabs') && !s.classList.contains('page-header'))
-      s.style.display = 'none';
+  const sec = document.getElementById(targetId);
+  if (!sec) return;
+  for (const s of sec.parentElement.children) {
+    if (s.classList.contains('tabs') || s.classList.contains('page-header')) continue;
+    s.style.display = (s.id === targetId) ? '' : 'none';
   }
-  section.style.display = '';
 }
 </script>
 </body>
