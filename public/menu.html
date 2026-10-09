@@ -600,7 +600,7 @@
 <script>
 const params = new URLSearchParams(location.search);
 let SESSION = params.get('session') || '';
-let CODE    = params.get('code')    || '';
+let CODE    = '';
 let paired  = false;
 
 // ── PAIRING ──────────────────────────────────────────────────────────
@@ -632,12 +632,6 @@ async function doPair() {
 }
 
 document.getElementById('code-input').addEventListener('keydown', e => { if (e.key === 'Enter') doPair(); });
-
-// If URL has session + code, auto-pair
-if (SESSION && CODE) {
-  document.getElementById('code-input').value = CODE;
-  doPair();
-}
 
 // ── STATE SYNC ───────────────────────────────────────────────────────
 let syncInterval = null;
