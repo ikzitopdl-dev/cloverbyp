@@ -15,11 +15,15 @@ app.use(cors());
 app.use(express.json({ limit: '5mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// ── Helper: bouw QR-URL ─────────────────────────────────────────
+function menuUrl(sessionId, pairingCode) {
+    const base = process.env.BASE_URL || `http://localhost:${PORT}`;
+    return `${base}/menu?session=${sessionId}&code=${pairingCode}`;
+}
+
 // ── In-memory sessie store ──────────────────────────────────────
-// { sessionId -> { state, clientSecret, lastSeen, commands: [], paired } }
 const sessions = new Map();
 
-// Verwijder sessies ouder dan 5 minuten
 setInterval(() => {
     const cutoff = Date.now() - 5 * 60 * 1000;
     for (const [id, sess] of sessions) {
@@ -27,50 +31,28 @@ setInterval(() => {
     }
 }, 60_000);
 
-// ── Helper: bouw QR-URL ─────────────────────────────────────────
-function menuUrl(sessionId, pairingCode) {
-    const base = process.env.BASE_URL || `http://localhost:${PORT}`;
-    return `${base}/menu?session=${sessionId}&code=${pairingCode}`;
-}
-
-// ──────────────────────────────────────────────────────────────────
-// POST /api/menu/session
-// Cheat stuurt dit bij opstart met de volledige huidige state.
-// Wij geven een sessionId, pairingCode en clientSecret terug.
-// De cheat gebruikt de teruggegeven URL als QR-code inhoud.
-// ──────────────────────────────────────────────────────────────────
-app.post('/api/menu/session', (req, res) => {
+// ── Session handler (gedeeld door alle route aliases) ───────────
+function handleSession(req, res) {
     const sessionId    = uuidv4();
     const pairingCode  = Math.random().toString(36).substring(2, 10).toUpperCase();
     const clientSecret = uuidv4();
     const state        = req.body.state || {};
 
     sessions.set(sessionId, {
-        state,
-        clientSecret,
-        pairingCode,
-        lastSeen: Date.now(),
-        commands: [],
-        paired: false,
+        state, clientSecret, pairingCode,
+        lastSeen: Date.now(), commands: [], paired: false,
     });
 
-    console.log(`[SESSION] Nieuw sessie aangemaakt: ${sessionId} code=${pairingCode}`);
+    console.log(`[SESSION] ${sessionId} code=${pairingCode}`);
 
     res.json({
-        sessionId,
-        pairingCode,
-        clientSecret,
+        sessionId, pairingCode, clientSecret,
         url: menuUrl(sessionId, pairingCode),
     });
-});
+}
 
-// ──────────────────────────────────────────────────────────────────
-// POST /api/menu/sync
-// Cheat stuurt elke 600ms de huidige state.
-// Wij geven de wachtrij van commando's terug.
-// Commando's zijn { key: string, value: number }
-// ──────────────────────────────────────────────────────────────────
-app.post('/api/menu/sync', (req, res) => {
+// ── Sync handler ────────────────────────────────────────────────
+function handleSync(req, res) {
     const { sessionId, clientSecret, state } = req.body;
     if (!sessionId || !clientSecret) return res.status(400).json({ error: 'missing fields' });
 
@@ -78,19 +60,22 @@ app.post('/api/menu/sync', (req, res) => {
     if (!sess) return res.status(404).json({ error: 'session not found' });
     if (sess.clientSecret !== clientSecret) return res.status(403).json({ error: 'forbidden' });
 
-    // Update state
     sess.state    = state || sess.state;
     sess.lastSeen = Date.now();
 
-    // Stuur wachtrij terug en wis daarna
     const commands = [...sess.commands];
     sess.commands  = [];
 
-    res.json({
-        paired:   sess.paired,
-        commands,
-    });
-});
+    res.json({ paired: sess.paired, commands });
+}
+
+// ── Routes: legacy paths ────────────────────────────────────────
+app.post('/api/menu/session', handleSession);
+app.post('/api/menu/sync',    handleSync);
+
+// ── Routes: obfuscated paths (uit SecureRoutes.hpp) ─────────────
+app.post('/r/552590a40afd1dbd77db', handleSession);   // menu_session
+app.post('/r/f77a359b638a266c8c4a', handleSync);      // menu_sync
 
 // ──────────────────────────────────────────────────────────────────
 // GET /api/menu/state?session=<id>&code=<code>
@@ -162,6 +147,11 @@ app.post('/api/menu/batch', (req, res) => {
 // ── Serve de web menu pagina ────────────────────────────────────
 // GET /menu  ->  public/menu.html
 app.get('/menu', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'menu.html'));
+});
+
+// Obfuscated page route (uit SecureRoutes.hpp page_menu)
+app.get('/p/11d7480347142c22', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'menu.html'));
 });
 
