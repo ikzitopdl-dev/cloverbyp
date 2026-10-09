@@ -1,7 +1,5 @@
-// Unique FiveM - Web Menu Backend
-// Vervangt uniquefivem.xyz met jouw eigen server
-// Start met: node server.js
-// Vereist: npm install express cors uuid
+// Clover – Web Menu Backend
+// Start: node server.js  |  Required: npm install express cors uuid
 
 const express = require('express');
 const cors    = require('cors');
@@ -15,153 +13,149 @@ app.use(cors());
 app.use(express.json({ limit: '5mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ── Helper: bouw QR-URL ─────────────────────────────────────────
+// ── Helper ────────────────────────────────────────────────────────────
 function menuUrl(sessionId, pairingCode) {
-    const base = process.env.BASE_URL || `http://localhost:${PORT}`;
-    return `${base}/menu?session=${sessionId}&code=${pairingCode}`;
+  const base = process.env.BASE_URL || `http://localhost:${PORT}`;
+  return `${base}/menu?session=${sessionId}&code=${pairingCode}`;
 }
 
-// ── In-memory sessie store ──────────────────────────────────────
+// ── In-memory session store ───────────────────────────────────────────
+// Session shape:
+// { state, clientSecret, pairingCode, lastSeen, commands, paired, codeUsed }
 const sessions = new Map();
 
+// Clean up sessions idle for more than 5 minutes
 setInterval(() => {
-    const cutoff = Date.now() - 5 * 60 * 1000;
-    for (const [id, sess] of sessions) {
-        if (sess.lastSeen < cutoff) sessions.delete(id);
-    }
+  const cutoff = Date.now() - 5 * 60 * 1000;
+  for (const [id, sess] of sessions) {
+    if (sess.lastSeen < cutoff) sessions.delete(id);
+  }
 }, 60_000);
 
-// ── Session handler (gedeeld door alle route aliases) ───────────
+// ── POST /api/menu/session  (cheat creates session) ───────────────────
 function handleSession(req, res) {
-    const sessionId    = uuidv4();
-    const pairingCode  = Math.random().toString(36).substring(2, 10).toUpperCase();
-    const clientSecret = uuidv4();
-    const state        = req.body.state || {};
+  const sessionId    = uuidv4();
+  const pairingCode  = Math.random().toString(36).substring(2, 10).toUpperCase();
+  const clientSecret = uuidv4();
+  const state        = req.body.state || {};
 
-    sessions.set(sessionId, {
-        state, clientSecret, pairingCode,
-        lastSeen: Date.now(), commands: [], paired: false,
-    });
+  sessions.set(sessionId, {
+    state,
+    clientSecret,
+    pairingCode,
+    lastSeen: Date.now(),
+    commands: [],
+    paired:   false,
+    codeUsed: false,   // ← one-time flag
+  });
 
-    console.log(`[SESSION] ${sessionId} code=${pairingCode}`);
-
-    res.json({
-        sessionId, pairingCode, clientSecret,
-        url: menuUrl(sessionId, pairingCode),
-    });
+  console.log(`[SESSION] ${sessionId}  code=${pairingCode}`);
+  res.json({ sessionId, pairingCode, clientSecret, url: menuUrl(sessionId, pairingCode) });
 }
 
-// ── Sync handler ────────────────────────────────────────────────
+// ── POST /api/menu/sync  (cheat pushes state every ~600ms) ────────────
 function handleSync(req, res) {
-    const { sessionId, clientSecret, state } = req.body;
-    if (!sessionId || !clientSecret) return res.status(400).json({ error: 'missing fields' });
+  const { sessionId, clientSecret, state } = req.body;
+  if (!sessionId || !clientSecret) return res.status(400).json({ error: 'missing fields' });
 
-    const sess = sessions.get(sessionId);
-    if (!sess) return res.status(404).json({ error: 'session not found' });
-    if (sess.clientSecret !== clientSecret) return res.status(403).json({ error: 'forbidden' });
+  const sess = sessions.get(sessionId);
+  if (!sess)                          return res.status(404).json({ error: 'session not found' });
+  if (sess.clientSecret !== clientSecret) return res.status(403).json({ error: 'forbidden' });
 
-    sess.state    = state || sess.state;
-    sess.lastSeen = Date.now();
+  sess.state    = state || sess.state;
+  sess.lastSeen = Date.now();
 
-    const commands = [...sess.commands];
-    sess.commands  = [];
-
-    res.json({ paired: sess.paired, commands });
+  const commands = [...sess.commands];
+  sess.commands  = [];
+  res.json({ paired: sess.paired, commands });
 }
 
-// ── Routes: legacy paths ────────────────────────────────────────
-app.post('/api/menu/session', handleSession);
-app.post('/api/menu/sync',    handleSync);
-
-// ── Routes: obfuscated paths (uit SecureRoutes.hpp) ─────────────
-app.post('/r/552590a40afd1dbd77db', handleSession);   // menu_session
-app.post('/r/f77a359b638a266c8c4a', handleSync);      // menu_sync
-
-// ──────────────────────────────────────────────────────────────────
-// GET /api/menu/state?session=<id>&code=<code>
-// Website haalt de huidige cheat state op (leesbaar voor de telefoon)
-// ──────────────────────────────────────────────────────────────────
+// ── GET /api/menu/state  (web page reads current state) ───────────────
+// Security:
+//  - Code must match
+//  - Code can only be used to pair ONCE; subsequent reads from the same
+//    paired tab are allowed, but a second device trying the same code is blocked.
 app.get('/api/menu/state', (req, res) => {
-    const { session: sessionId, code } = req.query;
-    if (!sessionId) return res.status(400).json({ error: 'missing session' });
+  const { session: sessionId, code } = req.query;
+  if (!sessionId) return res.status(400).json({ error: 'missing session' });
 
-    const sess = sessions.get(sessionId);
-    if (!sess) return res.status(404).json({ error: 'session not found' });
-    if (code && sess.pairingCode !== code) return res.status(403).json({ error: 'wrong code' });
+  const sess = sessions.get(sessionId);
+  if (!sess)  return res.status(404).json({ error: 'session not found' });
 
-    // Markeer als paired zodra de website verbindt
-    if (!sess.paired) {
-        sess.paired = true;
-        console.log(`[PAIRED] Sessie ${sessionId} gekoppeld via web menu`);
-    }
+  // Code validation
+  if (!code || sess.pairingCode !== code.toUpperCase())
+    return res.status(403).json({ error: 'Verkeerde code.' });
 
-    res.json({ ok: true, state: sess.state });
+  // One-time pairing: if code was already used by ANOTHER connection, block it
+  if (!sess.paired && sess.codeUsed)
+    return res.status(403).json({ error: 'Deze code is al gebruikt.' });
+
+  // First successful pair
+  if (!sess.paired) {
+    sess.paired   = true;
+    sess.codeUsed = true;
+    console.log(`[PAIRED] Sessie ${sessionId} gekoppeld`);
+  }
+
+  res.json({ ok: true, state: sess.state });
 });
 
-// ──────────────────────────────────────────────────────────────────
-// POST /api/menu/set?session=<id>&code=<code>
-// Website stuurt een commando om een optie te veranderen
-// Body: { key: string, value: number }
-// ──────────────────────────────────────────────────────────────────
+// ── POST /api/menu/set  (web page sends a single command) ─────────────
 app.post('/api/menu/set', (req, res) => {
-    const { session: sessionId, code } = req.query;
-    const { key, value } = req.body;
+  const { session: sessionId, code } = req.query;
+  const { key, value } = req.body;
+  if (!sessionId || key === undefined || value === undefined)
+    return res.status(400).json({ error: 'missing fields' });
 
-    if (!sessionId || key === undefined || value === undefined)
-        return res.status(400).json({ error: 'missing fields' });
+  const sess = sessions.get(sessionId);
+  if (!sess)  return res.status(404).json({ error: 'session not found' });
+  if (!sess.paired || sess.pairingCode !== code?.toUpperCase())
+    return res.status(403).json({ error: 'not paired' });
 
-    const sess = sessions.get(sessionId);
-    if (!sess) return res.status(404).json({ error: 'session not found' });
-    if (code && sess.pairingCode !== code) return res.status(403).json({ error: 'wrong code' });
-
-    sess.commands.push({ key, value: Number(value) });
-    console.log(`[SET] ${key} = ${value}  (sessie ${sessionId})`);
-
-    res.json({ ok: true });
+  sess.commands.push({ key, value: Number(value) });
+  console.log(`[SET] ${key} = ${value}  (sessie ${sessionId})`);
+  res.json({ ok: true });
 });
 
-// ──────────────────────────────────────────────────────────────────
-// POST /api/menu/batch?session=<id>&code=<code>
-// Website stuurt meerdere commando's tegelijk
-// Body: [{ key, value }, ...]
-// ──────────────────────────────────────────────────────────────────
+// ── POST /api/menu/batch  (web page sends multiple commands) ──────────
 app.post('/api/menu/batch', (req, res) => {
-    const { session: sessionId, code } = req.query;
-    const cmds = req.body;
+  const { session: sessionId, code } = req.query;
+  const cmds = req.body;
+  if (!sessionId || !Array.isArray(cmds))
+    return res.status(400).json({ error: 'missing fields' });
 
-    if (!sessionId || !Array.isArray(cmds))
-        return res.status(400).json({ error: 'missing fields' });
+  const sess = sessions.get(sessionId);
+  if (!sess)  return res.status(404).json({ error: 'session not found' });
+  if (!sess.paired || sess.pairingCode !== code?.toUpperCase())
+    return res.status(403).json({ error: 'not paired' });
 
-    const sess = sessions.get(sessionId);
-    if (!sess) return res.status(404).json({ error: 'session not found' });
-    if (code && sess.pairingCode !== code) return res.status(403).json({ error: 'wrong code' });
-
-    for (const { key, value } of cmds) {
-        if (key !== undefined && value !== undefined)
-            sess.commands.push({ key, value: Number(value) });
-    }
-
-    res.json({ ok: true, queued: cmds.length });
+  for (const { key, value } of cmds) {
+    if (key !== undefined && value !== undefined)
+      sess.commands.push({ key, value: Number(value) });
+  }
+  res.json({ ok: true, queued: cmds.length });
 });
 
-// ── Serve de web menu pagina ────────────────────────────────────
-// GET /menu  ->  public/menu.html
+// ── Serve web menu page ───────────────────────────────────────────────
 app.get('/menu', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'menu.html'));
+  res.sendFile(path.join(__dirname, 'public', 'menu.html'));
 });
 
-// Obfuscated page route (uit SecureRoutes.hpp page_menu)
+// Obfuscated page route (SecureRoutes.hpp page_menu)
 app.get('/p/11d7480347142c22', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'menu.html'));
+  res.sendFile(path.join(__dirname, 'public', 'menu.html'));
 });
 
-// ── Fallback voor onbekende routes ─────────────────────────────
-app.use((req, res) => {
-    res.status(404).json({ error: 'not found' });
-});
+// Legacy + obfuscated API routes
+app.post('/api/menu/session',      handleSession);
+app.post('/api/menu/sync',         handleSync);
+app.post('/r/552590a40afd1dbd77db', handleSession);  // menu_session obfuscated
+app.post('/r/f77a359b638a266c8c4a', handleSync);     // menu_sync obfuscated
+
+// ── 404 fallback ──────────────────────────────────────────────────────
+app.use((req, res) => res.status(404).json({ error: 'not found' }));
 
 app.listen(PORT, () => {
-    console.log(`\n✅ Unique Web Menu Server draait op http://localhost:${PORT}`);
-    console.log(`   Web menu pagina: http://localhost:${PORT}/menu`);
-    console.log(`   Stel BASE_URL in voor publieke URL (bijv. https://jouwnaam.nl)\n`);
+  console.log(`\n✅ Clover Web Menu Server op http://localhost:${PORT}`);
+  console.log(`   Web menu: http://localhost:${PORT}/menu\n`);
 });
