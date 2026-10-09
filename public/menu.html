@@ -313,6 +313,16 @@
                 <option>Linear</option><option>Smooth</option><option>Bezier</option>
               </select>
             </div>
+            <div class="opt">
+              <div class="opt-label">Bone</div>
+              <select onchange="send('aimbotSelectedType',this.selectedIndex)">
+                <option>Head</option><option>Hip</option><option>Neck</option>
+                <option>Left Hand</option><option>Right Hand</option>
+                <option>Left Foot</option><option>Right Foot</option>
+                <option>Left Ankle</option><option>Right Ankle</option>
+                <option>Bull</option><option>Sleeper</option>
+              </select>
+            </div>
             <div class="slider-row">
               <div class="slider-header"><span>FOV</span><span class="slider-val" id="v-aimBotFov">50</span></div>
               <input type="range" min="1" max="300" value="50" oninput="slideSet('aimBotFov',this)">
@@ -350,6 +360,16 @@
             <div class="opt"><div class="opt-label">Dynamic Silent FOV</div><label class="toggle"><input type="checkbox" onchange="send('dynamicSilentFov',+this.checked)"><div class="track"></div></label></div>
             <div class="opt"><div class="opt-label">Magic Bullets</div><label class="toggle"><input type="checkbox" onchange="send('magicBullets',+this.checked)"><div class="track"></div></label></div>
             <div class="opt"><div class="opt-label">Show Preview</div><label class="toggle"><input type="checkbox" onchange="send('showSilentPreview',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt">
+              <div class="opt-label">Bone</div>
+              <select onchange="send('SlientSlectedType',this.selectedIndex)">
+                <option>Head</option><option>Hip</option><option>Neck</option>
+                <option>Left Hand</option><option>Right Hand</option>
+                <option>Left Foot</option><option>Right Foot</option>
+                <option>Left Ankle</option><option>Right Ankle</option>
+                <option>Bull</option><option>Sleeper</option>
+              </select>
+            </div>
             <div class="slider-row">
               <div class="slider-header"><span>Silent FOV</span><span class="slider-val" id="v-silentFov">30</span></div>
               <input type="range" min="1" max="200" value="30" oninput="slideSet('silentFov',this)">
@@ -396,6 +416,12 @@
             <div class="opt"><div class="opt-label">Ignore Dead</div><label class="toggle"><input type="checkbox" onchange="send('aimAssistIgnoreDead',+this.checked)"><div class="track"></div></label></div>
             <div class="opt"><div class="opt-label">Ignore Friends</div><label class="toggle"><input type="checkbox" onchange="send('aimAssistIgnoreFriends',+this.checked)"><div class="track"></div></label></div>
             <div class="opt"><div class="opt-label">Show Preview</div><label class="toggle"><input type="checkbox" onchange="send('showAssistPreview',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt">
+              <div class="opt-label">Bone</div>
+              <select onchange="send('aimAssistBone',this.selectedIndex)">
+                <option>Head</option><option>Neck</option><option>Hip</option><option>Closest</option>
+              </select>
+            </div>
             <div class="slider-row">
               <div class="slider-header"><span>FOV</span><span class="slider-val" id="v-aimAssistFov">50</span></div>
               <input type="range" min="1" max="300" value="50" oninput="slideSet('aimAssistFov',this)">
@@ -825,6 +851,14 @@ function applyState(s) {
       if (el) el.value = s[k];
       const lbl = document.getElementById(id);
       if (lbl) lbl.textContent = s[k];
+    }
+  }
+  // Selects (numeric index)
+  const selectKeys = ['aimbotSelectedType', 'SlientSlectedType', 'aimAssistBone', 'aimStyle', 'selectedWeather'];
+  for (const k of selectKeys) {
+    if (s[k] !== undefined && !userLock[k]) {
+      const el = document.querySelector(`select[onchange*="'${k}'"]`);
+      if (el) el.selectedIndex = s[k];
     }
   }
 }
