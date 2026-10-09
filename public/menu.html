@@ -212,10 +212,26 @@
   /* halloween pumpkin accent on section headers */
   .page-title::after { content: ' 🎃'; font-size: 16px; }
 
-  @media (max-width: 600px) {
+  /* ── MOBILE ── */
+  #hamburger {
+    display: none; position: fixed; top: 12px; left: 12px; z-index: 100;
+    background: var(--bg2); border: 1px solid #3a2010; border-radius: 8px;
+    width: 38px; height: 38px; align-items: center; justify-content: center;
+    font-size: 20px; cursor: pointer; color: var(--accent);
+    box-shadow: 0 0 10px rgba(255,106,0,0.2);
+  }
+  #sidebar-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 9;
+  }
+  #sidebar-overlay.open { display: block; }
+  @media (max-width: 700px) {
     :root { --sidebar-w: 0px; }
-    #sidebar { transform: translateX(-210px); }
+    #sidebar { transform: translateX(-220px); transition: transform 0.22s ease; width: 210px; z-index: 20; }
+    #sidebar.open { transform: translateX(0); }
     #main { margin-left: 0; }
+    #hamburger { display: flex; }
+    .page { padding: 58px 14px 40px; }
+    .cards { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -238,6 +254,8 @@
 
 <!-- ── MAIN APP ── -->
 <div id="app">
+  <div id="hamburger" onclick="toggleNav()">☰</div>
+  <div id="sidebar-overlay" onclick="closeNav()"></div>
   <div id="sidebar">
     <div class="logo-bar">
       <img id="sidebar-logo" src="logo.png" alt="" onerror="this.style.display='none';document.getElementById('sidebar-logo-fallback').style.display='block'">
@@ -863,6 +881,7 @@ function showPage(name) {
   document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   document.getElementById('nav-' + name).classList.add('active');
+  closeNav(); // close sidebar on mobile after selecting a page
 }
 
 function switchTab(btn, targetId) {
@@ -875,6 +894,14 @@ function switchTab(btn, targetId) {
     if (s.classList.contains('tabs') || s.classList.contains('page-header')) continue;
     s.style.display = (s.id === targetId) ? '' : 'none';
   }
+}
+function toggleNav() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeNav() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
 }
 </script>
 </body>
