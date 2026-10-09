@@ -2,1192 +2,788 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Unique — Web Menu</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clover · Remote Control</title>
 <style>
   :root {
-    --bg:      #0a0a0f;
-    --bg2:     #111118;
-    --bg3:     #18181f;
-    --bg4:     #1e1e28;
-    --border:  rgba(255,255,255,0.07);
-    --accent:  #6c63ff;
-    --accent2: #a78bfa;
-    --text:    #e8e8f0;
-    --muted:   #6b6b80;
-    --success: #22c55e;
-    --error:   #ef4444;
-    --warn:    #f59e0b;
-    --safe:    rgba(108,99,255,0.12);
+    --bg: #0e0e10;
+    --bg2: #141416;
+    --bg3: #1a1a1d;
+    --bg4: #222226;
+    --border: #2a2a2f;
+    --accent: #e040fb;
+    --accent2: #c000e0;
+    --text: #f0f0f5;
+    --muted: #7a7a8a;
+    --danger: #e05555;
+    --success: #40e080;
+    --sidebar-w: 200px;
   }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; min-height: 100vh; }
 
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
-
-  body {
-    background: var(--bg);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
+  /* ── PAIR SCREEN ── */
+  #pair-screen {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 100vh; gap: 24px; padding: 24px;
   }
+  #pair-screen .logo { font-size: 22px; font-weight: 700; letter-spacing: 1px; color: var(--accent); }
+  #pair-screen .sub { color: var(--muted); font-size: 13px; }
+  #pair-screen .card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+    padding: 32px; width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 16px;
+  }
+  #pair-screen input {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-size: 22px; font-weight: 700; letter-spacing: 6px; text-align: center;
+    padding: 14px; width: 100%; outline: none; text-transform: uppercase;
+    transition: border-color 0.2s;
+  }
+  #pair-screen input:focus { border-color: var(--accent); }
+  #pair-screen .btn-primary {
+    background: var(--accent); color: #fff; border: none; border-radius: 8px;
+    padding: 13px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+  }
+  #pair-screen .btn-primary:hover { background: var(--accent2); }
+  #pair-err { color: var(--danger); font-size: 13px; text-align: center; min-height: 18px; }
 
-  /* ── Header ── */
-  .header {
-    position: sticky; top: 0; z-index: 100;
-    background: rgba(10,10,15,0.92);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
-    padding: 14px 16px;
+  /* ── APP SHELL ── */
+  #app { display: none; height: 100vh; overflow: hidden; }
+
+  /* Sidebar */
+  #sidebar {
+    position: fixed; top: 0; left: 0; width: var(--sidebar-w); height: 100vh;
+    background: var(--bg2); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; z-index: 10;
+  }
+  .logo-bar {
+    padding: 18px 16px 14px; border-bottom: 1px solid var(--border);
     display: flex; align-items: center; gap: 10px;
   }
+  .logo-bar .logo-dot {
+    width: 32px; height: 32px; background: var(--accent); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+  }
+  .logo-bar .logo-text { font-weight: 700; font-size: 15px; }
+  .logo-bar .logo-sub { color: var(--muted); font-size: 11px; }
+  nav { flex: 1; padding: 10px 0; overflow-y: auto; }
+  nav a {
+    display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+    color: var(--muted); text-decoration: none; border-radius: 0; cursor: pointer;
+    transition: color 0.15s, background 0.15s; font-size: 14px; border-left: 3px solid transparent;
+  }
+  nav a:hover { color: var(--text); background: var(--bg3); }
+  nav a.active { color: var(--accent); background: rgba(224,64,251,0.08); border-left-color: var(--accent); }
+  nav a .icon { width: 18px; text-align: center; font-size: 15px; }
+  .session-box {
+    padding: 14px 16px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px;
+  }
+  .session-label { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+  .status-dot { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+  .dot.connected { background: var(--success); box-shadow: 0 0 6px var(--success); }
+  .btn-destruct {
+    background: var(--danger); color: #fff; border: none; border-radius: 7px;
+    padding: 9px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+  }
+  .btn-unload {
+    background: transparent; color: var(--danger); border: 1px solid var(--danger); border-radius: 7px;
+    padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+  }
+  .btn-destruct:hover, .btn-unload:hover { opacity: 0.8; }
 
-  .header-icon {
-    width: 32px; height: 32px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border-radius: 9px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; flex-shrink: 0;
+  /* Main content */
+  #main { margin-left: var(--sidebar-w); height: 100vh; overflow-y: auto; }
+  .page { display: none; padding: 28px 28px 40px; }
+  .page.active { display: block; }
+  .page-header { margin-bottom: 22px; }
+  .page-title { font-size: 20px; font-weight: 700; }
+  .page-sub { color: var(--muted); font-size: 13px; margin-top: 3px; }
+  .sync-badge {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
+    color: var(--success); background: rgba(64,224,128,0.1); border-radius: 20px; padding: 3px 10px; margin-top: 8px;
   }
 
-  .header-title { font-size: 16px; font-weight: 600; }
-
-  .status-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--error); margin-left: auto; flex-shrink: 0;
-    box-shadow: 0 0 6px currentColor;
-    transition: background 0.3s;
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab {
+    padding: 7px 16px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer;
+    background: var(--bg3); color: var(--muted); border: none; transition: all 0.15s;
   }
-  .status-dot.connected { background: var(--success); }
-  .status-dot.syncing   { background: var(--warn); }
+  .tab.active { background: var(--accent); color: #fff; }
+  .tab:hover:not(.active) { color: var(--text); }
 
-  .status-text {
-    font-size: 11px; color: var(--muted); margin-left: 4px;
-  }
-
-  /* ── Not connected overlay ── */
-  #overlay {
-    position: fixed; inset: 0; z-index: 200;
-    background: rgba(0,0,0,0.85);
-    display: flex; align-items: center; justify-content: center;
-    flex-direction: column; gap: 16px; padding: 32px;
-    text-align: center;
-  }
-
-  #overlay.hidden { display: none; }
-
-  .overlay-icon { font-size: 48px; }
-  .overlay-title { font-size: 20px; font-weight: 700; }
-  .overlay-sub { font-size: 14px; color: var(--muted); line-height: 1.5; }
-
-  /* ── Tab bar ── */
-  .tabs {
-    display: flex;
-    overflow-x: auto;
-    scrollbar-width: none;
-    background: var(--bg2);
-    border-bottom: 1px solid var(--border);
-    gap: 0;
-    padding: 0 8px;
-  }
-  .tabs::-webkit-scrollbar { display: none; }
-
-  .tab-btn {
-    flex-shrink: 0;
-    background: none; border: none;
-    color: var(--muted);
-    font-family: inherit;
-    font-size: 13px; font-weight: 500;
-    padding: 12px 14px;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: color 0.2s, border-color 0.2s;
-    white-space: nowrap;
-  }
-  .tab-btn.active { color: var(--accent2); border-color: var(--accent); }
-
-  /* ── Tab panels ── */
-  .panel { display: none; padding: 12px 12px 80px; }
-  .panel.active { display: block; }
-
-  /* ── Section ── */
-  .section { margin-bottom: 20px; }
-
-  .section-label {
-    font-size: 11px; font-weight: 600; text-transform: uppercase;
-    letter-spacing: 0.8px; color: var(--muted);
-    padding: 0 4px 8px;
-  }
-
+  /* Cards grid */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
   .card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    overflow: hidden;
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 18px;
   }
-
-  /* ── Toggle row ── */
-  .row {
-    display: flex; align-items: center;
-    padding: 13px 16px;
-    border-bottom: 1px solid var(--border);
-    gap: 12px;
-    min-height: 50px;
+  .card-title {
+    font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 14px; display: flex; justify-content: space-between;
   }
-  .row:last-child { border-bottom: none; }
+  .card-title span { color: var(--bg4); font-size: 11px; }
 
-  .row-icon { font-size: 18px; flex-shrink: 0; width: 24px; text-align: center; }
+  /* Option row */
+  .opt { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .opt:last-child { border-bottom: none; }
+  .opt-label { font-size: 14px; color: var(--text); }
+  .opt-label small { display: block; font-size: 11px; color: var(--muted); margin-top: 1px; }
 
-  .row-info { flex: 1; min-width: 0; }
-  .row-label { font-size: 14px; font-weight: 500; }
-  .row-desc  { font-size: 12px; color: var(--muted); margin-top: 1px; }
-
-  /* Toggle switch */
-  .toggle {
-    position: relative; flex-shrink: 0;
-    width: 48px; height: 28px;
-    -webkit-appearance: none; appearance: none;
-    background: var(--bg4);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    cursor: pointer;
-    transition: background 0.25s, border-color 0.25s;
-    outline: none;
+  /* Toggle */
+  .toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle .track {
+    position: absolute; inset: 0; background: var(--bg4); border-radius: 11px;
+    cursor: pointer; transition: background 0.2s;
   }
-  .toggle::after {
-    content: '';
-    position: absolute;
-    left: 4px; top: 4px;
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    background: var(--muted);
-    transition: left 0.25s, background 0.25s;
+  .toggle .track::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: transform 0.2s;
   }
-  .toggle:checked { background: var(--accent); border-color: var(--accent); }
-  .toggle:checked::after { left: 22px; background: #fff; }
+  .toggle input:checked + .track { background: var(--accent); }
+  .toggle input:checked + .track::after { transform: translateX(18px); }
 
-  /* Slider row */
-  .slider-row {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-  }
+  /* Slider */
+  .slider-row { padding: 9px 0; border-bottom: 1px solid var(--border); }
   .slider-row:last-child { border-bottom: none; }
-
-  .slider-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 10px;
-  }
-  .slider-label { font-size: 14px; font-weight: 500; }
-  .slider-value {
-    font-size: 13px; font-weight: 600;
-    color: var(--accent2);
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 2px 8px;
-    min-width: 40px; text-align: center;
-  }
-
+  .slider-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+  .slider-val { color: var(--accent); font-weight: 600; font-size: 13px; }
   input[type=range] {
-    -webkit-appearance: none; appearance: none;
-    width: 100%; height: 4px;
-    background: var(--bg4);
-    border-radius: 2px;
-    outline: none;
-    cursor: pointer;
-  }
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 20px; height: 20px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    box-shadow: 0 2px 6px rgba(108,99,255,0.4);
-    cursor: pointer;
-  }
-  input[type=range]::-moz-range-thumb {
-    width: 20px; height: 20px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border: none;
-    cursor: pointer;
+    width: 100%; accent-color: var(--accent); height: 4px; cursor: pointer; background: var(--bg4); border-radius: 2px;
   }
 
-  /* Select row */
-  .select-row {
-    display: flex; align-items: center;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    gap: 12px;
-  }
-  .select-row:last-child { border-bottom: none; }
-  .select-label { flex: 1; font-size: 14px; font-weight: 500; }
-
+  /* Select */
   select {
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: inherit;
-    font-size: 13px;
-    padding: 6px 10px;
-    outline: none;
-    cursor: pointer;
-    max-width: 150px;
+    background: var(--bg3); color: var(--text); border: 1px solid var(--border); border-radius: 7px;
+    padding: 6px 10px; font-size: 13px; cursor: pointer; outline: none;
   }
+  select:focus { border-color: var(--accent); }
 
-  /* ── Players tab ── */
-  .player-card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px 14px;
-    margin-bottom: 8px;
-    display: flex; align-items: center; gap: 12px;
+  /* Players table */
+  .player-list { display: flex; flex-direction: column; gap: 8px; }
+  .player-row {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;
   }
-  .player-avatar {
-    width: 36px; height: 36px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; flex-shrink: 0;
+  .player-name { font-weight: 600; font-size: 14px; }
+  .player-id { color: var(--muted); font-size: 12px; }
+  .player-actions { display: flex; gap: 6px; }
+  .btn-sm {
+    padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: none; transition: opacity 0.2s;
   }
-  .player-name { font-size: 14px; font-weight: 600; }
-  .player-meta { font-size: 12px; color: var(--muted); }
-  .player-dist { margin-left: auto; font-size: 12px; color: var(--accent2); font-weight: 600; }
+  .btn-sm:hover { opacity: 0.8; }
+  .btn-tp { background: var(--accent); color: #fff; }
+  .btn-friend { background: var(--bg4); color: var(--text); border: 1px solid var(--border); }
+  #no-players { color: var(--muted); font-size: 13px; padding: 16px 0; }
 
-  /* ── Floating sync indicator ── */
-  .sync-bar {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    background: var(--bg2);
-    border-top: 1px solid var(--border);
-    padding: 10px 16px;
-    display: flex; align-items: center; gap: 8px;
-    font-size: 12px; color: var(--muted);
-    z-index: 50;
+  @media (max-width: 600px) {
+    :root { --sidebar-w: 0px; }
+    #sidebar { transform: translateX(-200px); transition: transform 0.2s; }
+    #sidebar.open { transform: translateX(0); width: 200px; }
+    .hamburger { display: flex; }
+    #main { margin-left: 0; }
   }
-
-  .pulse {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--success);
-    animation: pulse 1.5s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: 0.4; transform: scale(0.8); }
-  }
-
-  .last-sync { margin-left: auto; }
-
-  /* ── Toast ── */
-  .toast {
-    position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 18px;
-    font-size: 13px;
-    white-space: nowrap;
-    z-index: 300;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.2s;
-  }
-  .toast.show { opacity: 1; }
-
-  /* ── Empty state ── */
-  .empty {
-    text-align: center; padding: 48px 16px;
-    color: var(--muted); font-size: 14px;
-  }
-  .empty-icon { font-size: 40px; margin-bottom: 12px; }
 </style>
 </head>
 <body>
 
-<!-- Overlay: wacht op verbinding -->
-<div id="overlay">
-  <div class="overlay-icon">📱</div>
-  <div class="overlay-title">Verbinden met cheat...</div>
-  <div class="overlay-sub">
-    De cheat moet actief zijn en Web Menu ingeschakeld hebben.<br><br>
-    Scan de QR-code vanuit de cheat of open deze URL direct vanuit de loader.
+<!-- ── PAIR SCREEN ── -->
+<div id="pair-screen">
+  <div class="logo">☘ Clover</div>
+  <div class="sub">Remote Cheat Control</div>
+  <div class="card">
+    <div style="font-size:15px;font-weight:600;">Voer je koppelcode in</div>
+    <div style="color:var(--muted);font-size:13px;">De code staat in het cheat menu onder Web Menu.</div>
+    <input id="code-input" type="text" maxlength="8" placeholder="XXXXXXXX" autocomplete="off" spellcheck="false">
+    <div id="pair-err"></div>
+    <button class="btn-primary" onclick="doPair()">Verbinden</button>
   </div>
 </div>
 
-<!-- Header -->
-<div class="header">
-  <div class="header-icon">👻</div>
-  <div class="header-title">Unique</div>
-  <div class="status-dot" id="status-dot"></div>
-  <div class="status-text" id="status-text">Verbinding maken...</div>
-</div>
-
-<!-- Tab bar -->
-<div class="tabs">
-  <button class="tab-btn active" onclick="switchTab('esp')">🎯 ESP</button>
-  <button class="tab-btn" onclick="switchTab('aim')">🔫 Aim</button>
-  <button class="tab-btn" onclick="switchTab('misc')">⚙️ Misc</button>
-  <button class="tab-btn" onclick="switchTab('vehicle')">🚗 Voertuig</button>
-  <button class="tab-btn" onclick="switchTab('players')">👥 Spelers</button>
-</div>
-
-<!-- ── ESP TAB ── -->
-<div class="panel active" id="tab-esp">
-
-  <div class="section">
-    <div class="section-label">Speler ESP</div>
-    <div class="card">
-      <div class="row">
-        <div class="row-icon">👁</div>
-        <div class="row-info">
-          <div class="row-label">ESP aan/uit</div>
-          <div class="row-desc">Schakel alle ESP in of uit</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="espToggle">
+<!-- ── MAIN APP ── -->
+<div id="app">
+  <div id="sidebar">
+    <div class="logo-bar">
+      <div class="logo-dot">☘</div>
+      <div>
+        <div class="logo-text">Clover</div>
+        <div class="logo-sub">Remote Control</div>
       </div>
-      <div class="row">
-        <div class="row-icon">📦</div>
-        <div class="row-info">
-          <div class="row-label">Box ESP</div>
-          <div class="row-desc">Rechthoek om spelers</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="boxEsp">
-      </div>
-      <div class="row">
-        <div class="row-icon">💀</div>
-        <div class="row-info">
-          <div class="row-label">Skeleton ESP</div>
-          <div class="row-desc">Botstructuur van spelers</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="skeletonEsp">
-      </div>
-      <div class="row">
-        <div class="row-icon">🏷</div>
-        <div class="row-info">
-          <div class="row-label">Naam ESP</div>
-          <div class="row-desc">Spelersnamen boven hoofd</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="nameEsp">
-      </div>
-      <div class="row">
-        <div class="row-icon">❤️</div>
-        <div class="row-info">
-          <div class="row-label">Health bar</div>
-          <div class="row-desc">Levensbalk naast speler</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="healthBar">
-      </div>
-      <div class="row">
-        <div class="row-icon">🛡</div>
-        <div class="row-info">
-          <div class="row-label">Armor bar</div>
-          <div class="row-desc">Pantserbalk naast speler</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="armorBar">
-      </div>
-      <div class="row">
-        <div class="row-icon">📏</div>
-        <div class="row-info">
-          <div class="row-label">Afstand ESP</div>
-          <div class="row-desc">Afstand in meters tonen</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="distanceEsp">
-      </div>
-      <div class="row">
-        <div class="row-icon">🎯</div>
-        <div class="row-info">
-          <div class="row-label">Hoofd cirkel</div>
-          <div class="row-desc">Cirkel rond hoofd</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="headCircleEsp">
-      </div>
-      <div class="row">
-        <div class="row-icon">🔫</div>
-        <div class="row-info">
-          <div class="row-label">Wapen ESP</div>
-          <div class="row-desc">Wapen van speler tonen</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="weaponEsp">
-      </div>
-      <div class="row">
-        <div class="row-icon">↗️</div>
-        <div class="row-info">
-          <div class="row-label">Snapline</div>
-          <div class="row-desc">Lijn van scherm naar speler</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="lineEsp">
-      </div>
-      <div class="row">
-        <div class="row-icon">🌈</div>
-        <div class="row-info">
-          <div class="row-label">Rainbow ESP</div>
-          <div class="row-desc">Regenboogkleur effect</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="rainbowEsp">
-      </div>
-      <div class="row">
-        <div class="row-icon">👻</div>
-        <div class="row-info">
-          <div class="row-label">Alleen zichtbaar</div>
-          <div class="row-desc">Alleen zichtbare spelers tonen</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="onlyVisible_esp">
-      </div>
+    </div>
+    <nav>
+      <a class="active" onclick="showPage('aim')" id="nav-aim"><span class="icon">🎯</span> Aim</a>
+      <a onclick="showPage('visuals')" id="nav-visuals"><span class="icon">👁</span> Visuals</a>
+      <a onclick="showPage('self')" id="nav-self"><span class="icon">🛡</span> Self</a>
+      <a onclick="showPage('vehicle')" id="nav-vehicle"><span class="icon">🚗</span> Voertuig</a>
+      <a onclick="showPage('misc')" id="nav-misc"><span class="icon">⚙️</span> Misc</a>
+      <a onclick="showPage('players')" id="nav-players"><span class="icon">👥</span> Spelers</a>
+    </nav>
+    <div class="session-box">
+      <div class="session-label">Sessie</div>
+      <div class="status-dot"><div class="dot" id="conn-dot"></div><span id="conn-text">Verbinden...</span></div>
+      <button class="btn-destruct" onclick="sendAction('destruct')">💣 Destruct</button>
+      <button class="btn-unload" onclick="sendAction('unload')">⏏ Unload</button>
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-label">ESP Afstand</div>
-    <div class="card">
-      <div class="slider-row">
-        <div class="slider-header">
-          <div class="slider-label">Max afstand</div>
-          <div class="slider-value" id="val-espDistance">500</div>
+  <div id="main">
+
+    <!-- AIM -->
+    <div class="page active" id="page-aim">
+      <div class="page-header">
+        <div class="page-title">Aim</div>
+        <div class="page-sub">Aimbot, Silent Aim, Triggerbot en Assist instellingen</div>
+        <div class="sync-badge"><div class="dot connected"></div> Live sync</div>
+      </div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab(this,'aim-aimbot')">Aimbot</button>
+        <button class="tab" onclick="switchTab(this,'aim-silent')">Silent</button>
+        <button class="tab" onclick="switchTab(this,'aim-trigger')">Trigger</button>
+        <button class="tab" onclick="switchTab(this,'aim-assist')">Assist</button>
+      </div>
+
+      <div id="aim-aimbot">
+        <div class="cards">
+          <div class="card">
+            <div class="card-title">AIM ASSIST</div>
+            <div class="opt"><div class="opt-label">Enable Aimbot</div><label class="toggle"><input type="checkbox" onchange="send('aimBot',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Sticky Aimbot<small>Blijft op target gericht</small></div><label class="toggle"><input type="checkbox" onchange="send('stickyAimbot',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Draw FOV Circle</div><label class="toggle"><input type="checkbox" onchange="send('drawAimbotFov',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Dynamic FOV</div><label class="toggle"><input type="checkbox" onchange="send('dynamicAimbotFov',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="slider-row">
+              <div class="slider-header"><span>FOV</span><span class="slider-val" id="v-aimBotFov">50</span></div>
+              <input type="range" min="1" max="300" value="50" oninput="slideSet('aimBotFov',this)">
+            </div>
+            <div class="slider-row">
+              <div class="slider-header"><span>Smooth X</span><span class="slider-val" id="v-smoothHorizontal">5</span></div>
+              <input type="range" min="1" max="30" value="5" oninput="slideSet('smoothHorizontal',this)">
+            </div>
+            <div class="slider-row">
+              <div class="slider-header"><span>Smooth Y</span><span class="slider-val" id="v-smoothVertical">5</span></div>
+              <input type="range" min="1" max="30" value="5" oninput="slideSet('smoothVertical',this)">
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">AIM INSTELLINGEN</div>
+            <div class="opt"><div class="opt-label">Alleen Zichtbaar</div><label class="toggle"><input type="checkbox" onchange="send('onlyVisibleAim',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Negeer Ped</div><label class="toggle"><input type="checkbox" onchange="send('ignorePed',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Negeer Doden</div><label class="toggle"><input type="checkbox" onchange="send('ignoreDeath',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Negeer Friends</div><label class="toggle"><input type="checkbox" onchange="send('ignoreFriends',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Wave Shield Bypass</div><label class="toggle"><input type="checkbox" onchange="send('waveShieldBypass',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="slider-row">
+              <div class="slider-header"><span>Max Afstand</span><span class="slider-val" id="v-aimDist">500</span></div>
+              <input type="range" min="10" max="1000" value="500" oninput="slideSet('aimDist',this)">
+            </div>
+          </div>
         </div>
-        <input type="range" min="50" max="1000" step="10"
-               data-key="espDistance" data-display="val-espDistance"
-               oninput="onSlider(this)">
+      </div>
+
+      <div id="aim-silent" style="display:none">
+        <div class="cards">
+          <div class="card">
+            <div class="card-title">SILENT AIM</div>
+            <div class="opt"><div class="opt-label">Silent Aim<small>Onzichtbaar naar doel buigen</small></div><label class="toggle"><input type="checkbox" onchange="send('silent',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Dynamic Silent FOV</div><label class="toggle"><input type="checkbox" onchange="send('dynamicSilentFov',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Magic Bullets</div><label class="toggle"><input type="checkbox" onchange="send('magicBullets',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="slider-row">
+              <div class="slider-header"><span>Silent FOV</span><span class="slider-val" id="v-silentFov">30</span></div>
+              <input type="range" min="1" max="200" value="30" oninput="slideSet('silentFov',this)">
+            </div>
+            <div class="slider-row">
+              <div class="slider-header"><span>Silent FOV Hoogte</span><span class="slider-val" id="v-silentFovHeight">30</span></div>
+              <input type="range" min="1" max="200" value="30" oninput="slideSet('silentFovHeight',this)">
+            </div>
+            <div class="slider-row">
+              <div class="slider-header"><span>Hit Kans (%)</span><span class="slider-val" id="v-silentHitChance">80</span></div>
+              <input type="range" min="1" max="100" value="80" oninput="slideSet('silentHitChance',this)">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="aim-trigger" style="display:none">
+        <div class="cards">
+          <div class="card">
+            <div class="card-title">TRIGGERBOT</div>
+            <div class="opt"><div class="opt-label">Triggerbot<small>Auto-schieten bij crosshair op target</small></div><label class="toggle"><input type="checkbox" onchange="send('triggerBot',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="slider-row">
+              <div class="slider-header"><span>Trigger FOV</span><span class="slider-val" id="v-triggerFov">10</span></div>
+              <input type="range" min="1" max="100" value="10" oninput="slideSet('triggerFov',this)">
+            </div>
+            <div class="slider-row">
+              <div class="slider-header"><span>Vertraging (ms)</span><span class="slider-val" id="v-triggerDelay">50</span></div>
+              <input type="range" min="0" max="500" value="50" oninput="slideSet('triggerDelay',this)">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="aim-assist" style="display:none">
+        <div class="cards">
+          <div class="card">
+            <div class="card-title">AIM ASSIST</div>
+            <div class="opt"><div class="opt-label">Aim Assist</div><label class="toggle"><input type="checkbox" onchange="send('aimAssist',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Alleen Zichtbaar</div><label class="toggle"><input type="checkbox" onchange="send('aimAssistOnlyVisible',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Negeer Ped</div><label class="toggle"><input type="checkbox" onchange="send('aimAssistIgnorePed',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Negeer Doden</div><label class="toggle"><input type="checkbox" onchange="send('aimAssistIgnoreDead',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Negeer Friends</div><label class="toggle"><input type="checkbox" onchange="send('aimAssistIgnoreFriends',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="slider-row">
+              <div class="slider-header"><span>FOV</span><span class="slider-val" id="v-aimAssistFov">50</span></div>
+              <input type="range" min="1" max="300" value="50" oninput="slideSet('aimAssistFov',this)">
+            </div>
+            <div class="slider-row">
+              <div class="slider-header"><span>Max Afstand</span><span class="slider-val" id="v-aimAssistDistance">500</span></div>
+              <input type="range" min="10" max="1000" value="500" oninput="slideSet('aimAssistDistance',this)">
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="section">
-    <div class="section-label">Radar</div>
-    <div class="card">
-      <div class="row">
-        <div class="row-icon">📡</div>
-        <div class="row-info">
-          <div class="row-label">Radar ESP</div>
-          <div class="row-desc">Mini-radar met spelers</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="radarEsp">
+    <!-- VISUALS -->
+    <div class="page" id="page-visuals">
+      <div class="page-header">
+        <div class="page-title">Visuals</div>
+        <div class="page-sub">ESP, Radar en weergave opties</div>
+        <div class="sync-badge"><div class="dot connected"></div> Live sync</div>
       </div>
-      <div class="row">
-        <div class="row-icon">🚗</div>
-        <div class="row-info">
-          <div class="row-label">Voertuigen op radar</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="radarShowVehicles">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab(this,'vis-esp')">ESP</button>
+        <button class="tab" onclick="switchTab(this,'vis-radar')">Radar</button>
+        <button class="tab" onclick="switchTab(this,'vis-crosshair')">Crosshair</button>
       </div>
-      <div class="row">
-        <div class="row-icon">📋</div>
-        <div class="row-info">
-          <div class="row-label">Namen op radar</div>
+      <div id="vis-esp">
+        <div class="cards">
+          <div class="card">
+            <div class="card-title">SPELER ESP</div>
+            <div class="opt"><div class="opt-label">Box ESP</div><label class="toggle"><input type="checkbox" onchange="send('boxEsp',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Skeleton ESP</div><label class="toggle"><input type="checkbox" onchange="send('skeletonEsp',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Naam ESP</div><label class="toggle"><input type="checkbox" onchange="send('nameEsp',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Health Bar</div><label class="toggle"><input type="checkbox" onchange="send('healthBar',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Armor Bar</div><label class="toggle"><input type="checkbox" onchange="send('armorBar',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Afstand ESP</div><label class="toggle"><input type="checkbox" onchange="send('distanceEsp',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Hoofd Cirkel</div><label class="toggle"><input type="checkbox" onchange="send('headCircleEsp',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Wapen ESP</div><label class="toggle"><input type="checkbox" onchange="send('weaponEsp',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Snapline</div><label class="toggle"><input type="checkbox" onchange="send('directionEsp',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Flags ESP</div><label class="toggle"><input type="checkbox" onchange="send('flagsEsp',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Hoed ESP</div><label class="toggle"><input type="checkbox" onchange="send('hatEsp',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Negeer Ped</div><label class="toggle"><input type="checkbox" onchange="send('ignorePed_esp',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Negeer Doden</div><label class="toggle"><input type="checkbox" onchange="send('ignoreDeath_esp',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="slider-row">
+              <div class="slider-header"><span>Max Afstand</span><span class="slider-val" id="v-espDistance">500</span></div>
+              <input type="range" min="10" max="1000" value="500" oninput="slideSet('espDistance',this)">
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">VOERTUIG ESP</div>
+            <div class="opt"><div class="opt-label">Voertuig ESP</div><label class="toggle"><input type="checkbox" onchange="send('vehicleEsp',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Lokaal Voertuig</div><label class="toggle"><input type="checkbox" onchange="send('drawLocalVehicle',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Vijand Voertuig</div><label class="toggle"><input type="checkbox" onchange="send('drawEnemyVehicle',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Voertuig Gezondheid</div><label class="toggle"><input type="checkbox" onchange="send('vehicleHealt',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Voertuig Marker</div><label class="toggle"><input type="checkbox" onchange="send('vehicleMarker',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Voertuig Snapline</div><label class="toggle"><input type="checkbox" onchange="send('vehicleEspSnapline',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Voertuig Afstand</div><label class="toggle"><input type="checkbox" onchange="send('vehicleEspShowDistance',this.checked?1:0)"><div class="track"></div></label></div>
+          </div>
         </div>
-        <input type="checkbox" class="toggle" data-key="radarShowNames">
+      </div>
+      <div id="vis-radar" style="display:none">
+        <div class="cards">
+          <div class="card">
+            <div class="card-title">RADAR</div>
+            <div class="opt"><div class="opt-label">Radar ESP</div><label class="toggle"><input type="checkbox" onchange="send('radarEsp',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Voertuigen op Radar</div><label class="toggle"><input type="checkbox" onchange="send('radarVehicles',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Namen op Radar</div><label class="toggle"><input type="checkbox" onchange="send('radarNames',this.checked?1:0)"><div class="track"></div></label></div>
+          </div>
+        </div>
+      </div>
+      <div id="vis-crosshair" style="display:none">
+        <div class="cards">
+          <div class="card">
+            <div class="card-title">CROSSHAIR</div>
+            <div class="opt"><div class="opt-label">Crosshair</div><label class="toggle"><input type="checkbox" onchange="send('crosshair',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="slider-row">
+              <div class="slider-header"><span>Grootte</span><span class="slider-val" id="v-crosshairSize">10</span></div>
+              <input type="range" min="1" max="50" value="10" oninput="slideSet('crosshairSize',this)">
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">FOV CHANGER</div>
+            <div class="opt"><div class="opt-label">FOV Changer</div><label class="toggle"><input type="checkbox" onchange="send('fovChanger',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="slider-row">
+              <div class="slider-header"><span>FOV Waarde</span><span class="slider-val" id="v-fovValue">70</span></div>
+              <input type="range" min="40" max="120" value="70" oninput="slideSet('fovValue',this)">
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
-</div>
-
-<!-- ── AIM TAB ── -->
-<div class="panel" id="tab-aim">
-
-  <div class="section">
-    <div class="section-label">Aimbot</div>
-    <div class="card">
-      <div class="row">
-        <div class="row-icon">🎯</div>
-        <div class="row-info">
-          <div class="row-label">Aimbot</div>
-          <div class="row-desc">Automatisch richten</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="aimBot">
+    <!-- SELF -->
+    <div class="page" id="page-self">
+      <div class="page-header">
+        <div class="page-title">Self</div>
+        <div class="page-sub">Bescherming, wapens en beweging</div>
+        <div class="sync-badge"><div class="dot connected"></div> Live sync</div>
       </div>
-      <div class="row">
-        <div class="row-icon">📌</div>
-        <div class="row-info">
-          <div class="row-label">Sticky Aimbot</div>
-          <div class="row-desc">Blijft op target gericht</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="stickyAimbot">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab(this,'self-prot')">Bescherming</button>
+        <button class="tab" onclick="switchTab(this,'self-weapons')">Wapens</button>
+        <button class="tab" onclick="switchTab(this,'self-move')">Beweging</button>
+        <button class="tab" onclick="switchTab(this,'self-anti')">Anti</button>
       </div>
-      <div class="row">
-        <div class="row-icon">👁</div>
-        <div class="row-info">
-          <div class="row-label">Alleen zichtbaar</div>
-          <div class="row-desc">Alleen zichtbare targets</div>
+      <div id="self-prot">
+        <div class="cards">
+          <div class="card">
+            <div class="card-title">BESCHERMING</div>
+            <div class="opt"><div class="opt-label">God Mode<small>Onkwetsbaar</small></div><label class="toggle"><input type="checkbox" onchange="send('godMode',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Semi God Mode<small>Bijna onkwetsbaar</small></div><label class="toggle"><input type="checkbox" onchange="send('semiGodMode',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Onzichtbaar</div><label class="toggle"><input type="checkbox" onchange="send('invisible',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Anti Headshot</div><label class="toggle"><input type="checkbox" onchange="send('antiHeadshot',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Advanced Anti Headshot</div><label class="toggle"><input type="checkbox" onchange="send('advancedAntiHeadshot',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">No Ragdoll</div><label class="toggle"><input type="checkbox" onchange="send('noRagdoll',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">No Body Hits</div><label class="toggle"><input type="checkbox" onchange="send('noBodyHits',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Absorption</div><label class="toggle"><input type="checkbox" onchange="send('absorption',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Damage Reduction</div><label class="toggle"><input type="checkbox" onchange="send('damageReduction',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Untargetable</div><label class="toggle"><input type="checkbox" onchange="send('untargetable',this.checked?1:0)"><div class="track"></div></label></div>
+          </div>
         </div>
-        <input type="checkbox" class="toggle" data-key="onlyVisible">
       </div>
-      <div class="row">
-        <div class="row-icon">🧟</div>
-        <div class="row-info">
-          <div class="row-label">Negeer doden</div>
+      <div id="self-weapons" style="display:none">
+        <div class="cards">
+          <div class="card">
+            <div class="card-title">WAPENS</div>
+            <div class="opt"><div class="opt-label">Oneindige Munitie</div><label class="toggle"><input type="checkbox" onchange="send('infiniteAmmo',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">No Recoil</div><label class="toggle"><input type="checkbox" onchange="send('noRecoil',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">No Spread</div><label class="toggle"><input type="checkbox" onchange="send('noSpread',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">No Reload</div><label class="toggle"><input type="checkbox" onchange="send('noReload',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Rapid Fire</div><label class="toggle"><input type="checkbox" onchange="send('rapidFire',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Explosieve Kogels</div><label class="toggle"><input type="checkbox" onchange="send('explosiveAmmo',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Schade Boost</div><label class="toggle"><input type="checkbox" onchange="send('damageBoost',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">One Punch</div><label class="toggle"><input type="checkbox" onchange="send('onePunch',this.checked?1:0)"><div class="track"></div></label></div>
+          </div>
         </div>
-        <input type="checkbox" class="toggle" data-key="ignoreDeath">
       </div>
-      <div class="slider-row">
-        <div class="slider-header">
-          <div class="slider-label">FOV</div>
-          <div class="slider-value" id="val-aimBotFov">50</div>
+      <div id="self-move" style="display:none">
+        <div class="cards">
+          <div class="card">
+            <div class="card-title">BEWEGING</div>
+            <div class="opt"><div class="opt-label">No Clip<small>Door muren lopen</small></div><label class="toggle"><input type="checkbox" onchange="send('noClip',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Auto Strafe</div><label class="toggle"><input type="checkbox" onchange="send('autoStrafe',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Gravity Hack</div><label class="toggle"><input type="checkbox" onchange="send('gravityHack',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Peek Assist</div><label class="toggle"><input type="checkbox" onchange="send('peekAssist',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Parachute</div><label class="toggle"><input type="checkbox" onchange="send('parachute',this.checked?1:0)"><div class="track"></div></label></div>
+          </div>
         </div>
-        <input type="range" min="1" max="180" step="1"
-               data-key="aimBotFov" data-display="val-aimBotFov"
-               oninput="onSlider(this)">
       </div>
-      <div class="slider-row">
-        <div class="slider-header">
-          <div class="slider-label">Smooth</div>
-          <div class="slider-value" id="val-aimBotSmooth">5</div>
+      <div id="self-anti" style="display:none">
+        <div class="cards">
+          <div class="card">
+            <div class="card-title">ANTI OPTIES</div>
+            <div class="opt"><div class="opt-label">Anti Godmode</div><label class="toggle"><input type="checkbox" onchange="send('antiGodmode',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Patch Enemy Anti Headshot</div><label class="toggle"><input type="checkbox" onchange="send('patchEnemyAntiHeadshot',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Patch Enemy Immortality</div><label class="toggle"><input type="checkbox" onchange="send('patchEnemyImmortality',this.checked?1:0)"><div class="track"></div></label></div>
+          </div>
         </div>
-        <input type="range" min="1" max="50" step="1"
-               data-key="aimBotSmooth" data-display="val-aimBotSmooth"
-               oninput="onSlider(this)">
       </div>
     </div>
-  </div>
 
-  <div class="section">
-    <div class="section-label">Silent Aim</div>
-    <div class="card">
-      <div class="row">
-        <div class="row-icon">🤫</div>
-        <div class="row-info">
-          <div class="row-label">Silent Aim</div>
-          <div class="row-desc">Onzichtbaar naar doel buigen</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="silent">
+    <!-- VEHICLE -->
+    <div class="page" id="page-vehicle">
+      <div class="page-header">
+        <div class="page-title">Voertuig</div>
+        <div class="page-sub">Bescherming, prestaties en acties</div>
+        <div class="sync-badge"><div class="dot connected"></div> Live sync</div>
       </div>
-      <div class="slider-row">
-        <div class="slider-header">
-          <div class="slider-label">Silent FOV</div>
-          <div class="slider-value" id="val-silentFov">30</div>
-        </div>
-        <input type="range" min="1" max="180" step="1"
-               data-key="silentFov" data-display="val-silentFov"
-               oninput="onSlider(this)">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab(this,'veh-prot')">Bescherming</button>
+        <button class="tab" onclick="switchTab(this,'veh-perf')">Prestaties</button>
+        <button class="tab" onclick="switchTab(this,'veh-action')">Acties</button>
       </div>
-      <div class="slider-row">
-        <div class="slider-header">
-          <div class="slider-label">Hit Kans (%)</div>
-          <div class="slider-value" id="val-silentHitChance">80</div>
+      <div id="veh-prot">
+        <div class="cards">
+          <div class="card">
+            <div class="card-title">VOERTUIG BESCHERMING</div>
+            <div class="opt"><div class="opt-label">Voertuig God Mode</div><label class="toggle"><input type="checkbox" onchange="send('vehicleGodMode',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Auto Reparatie</div><label class="toggle"><input type="checkbox" onchange="send('vehicleAutoRepair',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Bullet-proof Banden</div><label class="toggle"><input type="checkbox" onchange="send('vehicleBulletProofTyres',this.checked?1:0)"><div class="track"></div></label></div>
+          </div>
         </div>
-        <input type="range" min="1" max="100" step="1"
-               data-key="silentHitChance" data-display="val-silentHitChance"
-               oninput="onSlider(this)">
+      </div>
+      <div id="veh-perf" style="display:none">
+        <div class="cards">
+          <div class="card">
+            <div class="card-title">PRESTATIES</div>
+            <div class="opt"><div class="opt-label">Speed Boost</div><label class="toggle"><input type="checkbox" onchange="send('vehicleSpeedBoost',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Shift Boost</div><label class="toggle"><input type="checkbox" onchange="send('vehicleShiftBoost',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Rocket Boost</div><label class="toggle"><input type="checkbox" onchange="send('rocketBoost',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Vehicle Jump</div><label class="toggle"><input type="checkbox" onchange="send('vehicleJump',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Extra Grip</div><label class="toggle"><input type="checkbox" onchange="send('vehicleExtraGrip',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Easy Handling</div><label class="toggle"><input type="checkbox" onchange="send('vehicleEasyHandling',this.checked?1:0)"><div class="track"></div></label></div>
+          </div>
+        </div>
+      </div>
+      <div id="veh-action" style="display:none">
+        <div class="cards">
+          <div class="card">
+            <div class="card-title">ACTIES</div>
+            <div class="opt"><div class="opt-label">Quick Unlock</div><label class="toggle"><input type="checkbox" onchange="send('quickUnlock',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Steal Car</div><label class="toggle"><input type="checkbox" onchange="send('stealCar',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Vehicle Fix</div><label class="toggle"><input type="checkbox" onchange="send('vehicleFix',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Vehicle Break</div><label class="toggle"><input type="checkbox" onchange="send('vehicleBreak',this.checked?1:0)"><div class="track"></div></label></div>
+            <div class="opt" style="justify-content:flex-start;gap:12px;flex-wrap:wrap;">
+              <span class="opt-label">Repareer nu</span>
+              <button class="btn-sm btn-tp" onclick="send('vehicleFullRepairNow',1)">Repareer</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="section">
-    <div class="section-label">Triggerbot</div>
-    <div class="card">
-      <div class="row">
-        <div class="row-icon">⚡</div>
-        <div class="row-info">
-          <div class="row-label">Triggerbot</div>
-          <div class="row-desc">Auto-schieten bij crosshair op target</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="triggerBot">
+    <!-- MISC -->
+    <div class="page" id="page-misc">
+      <div class="page-header">
+        <div class="page-title">Misc</div>
+        <div class="page-sub">Wereld, sessie en overige opties</div>
+        <div class="sync-badge"><div class="dot connected"></div> Live sync</div>
       </div>
-      <div class="slider-row">
-        <div class="slider-header">
-          <div class="slider-label">Trigger FOV</div>
-          <div class="slider-value" id="val-triggerFov">10</div>
+      <div class="cards">
+        <div class="card">
+          <div class="card-title">WERELD</div>
+          <div class="opt"><div class="opt-label">Weer Changer</div><label class="toggle"><input type="checkbox" onchange="send('weatherChanger',this.checked?1:0)"><div class="track"></div></label></div>
+          <div class="opt">
+            <div class="opt-label">Weer Type</div>
+            <select onchange="send('weatherType',this.selectedIndex)">
+              <option>Helder</option><option>Bewolkt</option><option>Regen</option>
+              <option>Onweer</option><option>Mist</option><option>Sneeuw</option><option>Extra zon</option>
+            </select>
+          </div>
         </div>
-        <input type="range" min="1" max="60" step="1"
-               data-key="triggerFov" data-display="val-triggerFov"
-               oninput="onSlider(this)">
-      </div>
-      <div class="slider-row">
-        <div class="slider-header">
-          <div class="slider-label">Vertraging (ms)</div>
-          <div class="slider-value" id="val-triggerDelay">50</div>
+        <div class="card">
+          <div class="card-title">SESSIE</div>
+          <div class="opt"><div class="opt-label">Solo Sessie<small>Alleen in lobby</small></div><label class="toggle"><input type="checkbox" onchange="send('soloSession',this.checked?1:0)"><div class="track"></div></label></div>
+          <div class="opt"><div class="opt-label">Stream Proof</div><label class="toggle"><input type="checkbox" onchange="send('streamProof',this.checked?1:0)"><div class="track"></div></label></div>
+          <div class="opt"><div class="opt-label">Block Input</div><label class="toggle"><input type="checkbox" onchange="send('blockInput',this.checked?1:0)"><div class="track"></div></label></div>
+          <div class="opt"><div class="opt-label">Watermark</div><label class="toggle"><input type="checkbox" onchange="send('watermarkEnabled',this.checked?1:0)"><div class="track"></div></label></div>
         </div>
-        <input type="range" min="0" max="500" step="10"
-               data-key="triggerDelay" data-display="val-triggerDelay"
-               oninput="onSlider(this)">
+        <div class="card">
+          <div class="card-title">FAKE LAG / FPS</div>
+          <div class="opt"><div class="opt-label">Fake Lag</div><label class="toggle"><input type="checkbox" onchange="send('fakeLag',this.checked?1:0)"><div class="track"></div></label></div>
+          <div class="slider-row">
+            <div class="slider-header"><span>Fake Lag Vertraging</span><span class="slider-val" id="v-fakeLagDelay">50</span></div>
+            <input type="range" min="0" max="500" value="50" oninput="slideSet('fakeLagDelay',this)">
+          </div>
+          <div class="opt"><div class="opt-label">Fake FPS</div><label class="toggle"><input type="checkbox" onchange="send('fakeFps',this.checked?1:0)"><div class="track"></div></label></div>
+          <div class="slider-row">
+            <div class="slider-header"><span>FPS Target</span><span class="slider-val" id="v-fakeFpsTarget">60</span></div>
+            <input type="range" min="1" max="300" value="60" oninput="slideSet('fakeFpsTarget',this)">
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="section">
-    <div class="section-label">Crosshair</div>
-    <div class="card">
-      <div class="row">
-        <div class="row-icon">✛</div>
-        <div class="row-info">
-          <div class="row-label">Crosshair</div>
-          <div class="row-desc">Eigen crosshair tonen</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="crossHair">
+    <!-- PLAYERS -->
+    <div class="page" id="page-players">
+      <div class="page-header">
+        <div class="page-title">Spelers</div>
+        <div class="page-sub">Teleporteer, voeg toe als vriend, voertuig acties</div>
+        <div class="sync-badge"><div class="dot connected"></div> Live sync</div>
       </div>
-      <div class="slider-row">
-        <div class="slider-header">
-          <div class="slider-label">Grootte</div>
-          <div class="slider-value" id="val-crossHairSize">10</div>
-        </div>
-        <input type="range" min="1" max="50" step="1"
-               data-key="crossHairSize" data-display="val-crossHairSize"
-               oninput="onSlider(this)">
-      </div>
+      <div id="no-players">Geen spelers gevonden. Zorg dat de cheat actief is.</div>
+      <div class="player-list" id="player-list"></div>
     </div>
-  </div>
 
-</div>
-
-<!-- ── MISC TAB ── -->
-<div class="panel" id="tab-misc">
-
-  <div class="section">
-    <div class="section-label">Zelf bescherming</div>
-    <div class="card">
-      <div class="row">
-        <div class="row-icon">🛡</div>
-        <div class="row-info">
-          <div class="row-label">God Mode</div>
-          <div class="row-desc">Onkwetsbaar</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="godMode">
-      </div>
-      <div class="row">
-        <div class="row-icon">⚔️</div>
-        <div class="row-info">
-          <div class="row-label">Semi God Mode</div>
-          <div class="row-desc">Bijna onkwetsbaar</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="semiGodMode">
-      </div>
-      <div class="row">
-        <div class="row-icon">👻</div>
-        <div class="row-info">
-          <div class="row-label">Onzichtbaar</div>
-          <div class="row-desc">Onzichtbaar voor anderen</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="invisible">
-      </div>
-      <div class="row">
-        <div class="row-icon">🎯</div>
-        <div class="row-info">
-          <div class="row-label">Anti Headshot</div>
-          <div class="row-desc">Geen hoofdschoten ontvangen</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="antiHeadshot">
-      </div>
-      <div class="row">
-        <div class="row-icon">🏃</div>
-        <div class="row-info">
-          <div class="row-label">No Ragdoll</div>
-          <div class="row-desc">Niet omvallen bij schade</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="noRagdoll">
-      </div>
-      <div class="row">
-        <div class="row-icon">🎭</div>
-        <div class="row-info">
-          <div class="row-label">Untargetable</div>
-          <div class="row-desc">Niet aanvallend voor NPC's</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="untargetable">
-      </div>
-      <div class="row">
-        <div class="row-icon">🔄</div>
-        <div class="row-info">
-          <div class="row-label">No Clip</div>
-          <div class="row-desc">Door muren lopen</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="noClip">
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-label">Wapens</div>
-    <div class="card">
-      <div class="row">
-        <div class="row-icon">🔫</div>
-        <div class="row-info">
-          <div class="row-label">Oneindige munitie</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="infiniteAmmo">
-      </div>
-      <div class="row">
-        <div class="row-icon">🎯</div>
-        <div class="row-info">
-          <div class="row-label">No Recoil</div>
-          <div class="row-desc">Geen terugslag</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="noRecoil">
-      </div>
-      <div class="row">
-        <div class="row-icon">🌀</div>
-        <div class="row-info">
-          <div class="row-label">No Spread</div>
-          <div class="row-desc">Perfect nauwkeurig</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="noSpread">
-      </div>
-      <div class="row">
-        <div class="row-icon">⚡</div>
-        <div class="row-info">
-          <div class="row-label">Rapid Fire</div>
-          <div class="row-desc">Sneller schieten</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="rapidFire">
-      </div>
-      <div class="row">
-        <div class="row-icon">💥</div>
-        <div class="row-info">
-          <div class="row-label">Explosieve kogels</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="explosiveAmmo">
-      </div>
-      <div class="row">
-        <div class="row-icon">🔥</div>
-        <div class="row-info">
-          <div class="row-label">Brand kogels</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="fireAmmo">
-      </div>
-      <div class="row">
-        <div class="row-icon">💪</div>
-        <div class="row-info">
-          <div class="row-label">Schade boost</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="damageBoost">
-      </div>
-      <div class="row">
-        <div class="row-icon">👊</div>
-        <div class="row-info">
-          <div class="row-label">One Punch</div>
-          <div class="row-desc">Één klap = dood</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="onePunch">
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-label">Wereld</div>
-    <div class="card">
-      <div class="row">
-        <div class="row-icon">🌤</div>
-        <div class="row-info">
-          <div class="row-label">Weer veranderen</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="weatherChanger">
-      </div>
-      <div class="select-row">
-        <div class="select-label">Weer type</div>
-        <select data-key="selectedWeather" onchange="sendSelect(this)">
-          <option value="0">Helder</option>
-          <option value="1">Bewolkt</option>
-          <option value="2">Regen</option>
-          <option value="3">Onweer</option>
-          <option value="4">Mist</option>
-          <option value="5">Sneeuw</option>
-          <option value="6">Extra zon</option>
-        </select>
-      </div>
-      <div class="row">
-        <div class="row-icon">🕐</div>
-        <div class="row-info">
-          <div class="row-label">Tijd veranderen</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="timeChanger">
-      </div>
-      <div class="slider-row">
-        <div class="slider-header">
-          <div class="slider-label">Uur</div>
-          <div class="slider-value" id="val-timeHour">12</div>
-        </div>
-        <input type="range" min="0" max="23" step="1"
-               data-key="timeHour" data-display="val-timeHour"
-               oninput="onSlider(this)">
-      </div>
-      <div class="row">
-        <div class="row-icon">🎥</div>
-        <div class="row-info">
-          <div class="row-label">FOV Changer</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="fovChanger">
-      </div>
-      <div class="slider-row">
-        <div class="slider-header">
-          <div class="slider-label">FOV waarde</div>
-          <div class="slider-value" id="val-fovValue">70</div>
-        </div>
-        <input type="range" min="30" max="120" step="1"
-               data-key="fovValue" data-display="val-fovValue"
-               oninput="onSlider(this)">
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-label">Misc</div>
-    <div class="card">
-      <div class="row">
-        <div class="row-icon">🌐</div>
-        <div class="row-info">
-          <div class="row-label">Solo sessie</div>
-          <div class="row-desc">Alleen in lobby</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="soloSession">
-      </div>
-      <div class="row">
-        <div class="row-icon">📡</div>
-        <div class="row-info">
-          <div class="row-label">Fake Lag</div>
-          <div class="row-desc">Kunstmatige vertraging</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="fakeLag">
-      </div>
-      <div class="row">
-        <div class="row-icon">🔁</div>
-        <div class="row-info">
-          <div class="row-label">Auto Strafe</div>
-          <div class="row-desc">Automatisch strafebewegen</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="autoStrafe">
-      </div>
-      <div class="row">
-        <div class="row-icon">🌌</div>
-        <div class="row-info">
-          <div class="row-label">Gravity Hack</div>
-          <div class="row-desc">Zwaartekracht aanpassen</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="gravityHack">
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<!-- ── VEHICLE TAB ── -->
-<div class="panel" id="tab-vehicle">
-
-  <div class="section">
-    <div class="section-label">Voertuig bescherming</div>
-    <div class="card">
-      <div class="row">
-        <div class="row-icon">🛡</div>
-        <div class="row-info">
-          <div class="row-label">Voertuig God Mode</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="vehicleGodMode">
-      </div>
-      <div class="row">
-        <div class="row-icon">🔧</div>
-        <div class="row-info">
-          <div class="row-label">Auto Reparatie</div>
-          <div class="row-desc">Automatisch herstellen</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="vehicleAutoRepair">
-      </div>
-      <div class="row">
-        <div class="row-icon">🔒</div>
-        <div class="row-info">
-          <div class="row-label">Bullet-proof banden</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="vehicleBulletProofTyres">
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-label">Voertuig prestaties</div>
-    <div class="card">
-      <div class="row">
-        <div class="row-icon">🚀</div>
-        <div class="row-info">
-          <div class="row-label">Speed Boost</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="vehicleSpeedBoost">
-      </div>
-      <div class="slider-row">
-        <div class="slider-header">
-          <div class="slider-label">Speed hoeveelheid</div>
-          <div class="slider-value" id="val-vehicleSpeedBoostAmount">50</div>
-        </div>
-        <input type="range" min="1" max="200" step="1"
-               data-key="vehicleSpeedBoostAmount" data-display="val-vehicleSpeedBoostAmount"
-               oninput="onSlider(this)">
-      </div>
-      <div class="row">
-        <div class="row-icon">🛸</div>
-        <div class="row-info">
-          <div class="row-label">Rocket Boost</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="rocketBoost">
-      </div>
-      <div class="row">
-        <div class="row-icon">🦘</div>
-        <div class="row-info">
-          <div class="row-label">Vehicle Jump</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="vehicleJump">
-      </div>
-      <div class="row">
-        <div class="row-icon">⛽</div>
-        <div class="row-info">
-          <div class="row-label">Extra grip</div>
-          <div class="row-desc">Betere wegligging</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="vehicleExtraGrip">
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-label">Voertuig acties</div>
-    <div class="card">
-      <div class="row">
-        <div class="row-icon">🔓</div>
-        <div class="row-info">
-          <div class="row-label">Quick Unlock</div>
-          <div class="row-desc">Auto's snel ontgrendelen</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="quickUnlock">
-      </div>
-      <div class="row">
-        <div class="row-icon">🚗</div>
-        <div class="row-info">
-          <div class="row-label">Steal Car</div>
-          <div class="row-desc">Auto jatten</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="stealCar">
-      </div>
-      <div class="row">
-        <div class="row-icon">🔨</div>
-        <div class="row-info">
-          <div class="row-label">Vehicle Fix</div>
-          <div class="row-desc">Voertuig repareren</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="vehicleFix">
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-label">Voertuig ESP</div>
-    <div class="card">
-      <div class="row">
-        <div class="row-icon">🚙</div>
-        <div class="row-info">
-          <div class="row-label">Voertuig ESP</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="vehicleEsp">
-      </div>
-      <div class="row">
-        <div class="row-icon">❤️</div>
-        <div class="row-info">
-          <div class="row-label">Voertuig gezondheid</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="vehicleHealt">
-      </div>
-      <div class="row">
-        <div class="row-icon">📍</div>
-        <div class="row-info">
-          <div class="row-label">Voertuig marker</div>
-        </div>
-        <input type="checkbox" class="toggle" data-key="vehicleMarker">
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<!-- ── PLAYERS TAB ── -->
-<div class="panel" id="tab-players">
-  <div id="player-list">
-    <div class="empty">
-      <div class="empty-icon">👥</div>
-      Spelerlijst laden...
-    </div>
-  </div>
-</div>
-
-<!-- Sync bar -->
-<div class="sync-bar">
-  <div class="pulse" id="pulse-dot"></div>
-  <span id="sync-label">Synchroniseren...</span>
-  <span class="last-sync" id="last-sync-text"></span>
-</div>
-
-<!-- Toast notificatie -->
-<div class="toast" id="toast"></div>
+  </div><!-- /main -->
+</div><!-- /app -->
 
 <script>
-// ── URL params ──────────────────────────────────────────────────
-const params      = new URLSearchParams(location.search);
-const SESSION_ID  = params.get('session') || '';
-const PAIR_CODE   = params.get('code')    || '';
-const API_BASE    = '';   // zelfde origin als de server
+const params = new URLSearchParams(location.search);
+let SESSION = params.get('session') || '';
+let CODE    = params.get('code')    || '';
+let paired  = false;
 
-let connected   = false;
-let lastSyncAt  = null;
-let state       = {};
-let syncTimer   = null;
+// ── PAIRING ──────────────────────────────────────────────────────────
+async function doPair() {
+  const input = document.getElementById('code-input').value.trim().toUpperCase();
+  const err   = document.getElementById('pair-err');
+  err.textContent = '';
+  if (!input || input.length < 6) { err.textContent = 'Voer een geldige code in.'; return; }
 
-// ── Tab switching ───────────────────────────────────────────────
-function switchTab(name) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelector(`.tab-btn[onclick="switchTab('${name}')"]`).classList.add('active');
-  document.getElementById('tab-' + name).classList.add('active');
-}
-
-// ── Toast ───────────────────────────────────────────────────────
-function toast(msg, duration = 1800) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(toast._t);
-  toast._t = setTimeout(() => el.classList.remove('show'), duration);
-}
-
-// ── Status UI ───────────────────────────────────────────────────
-function setStatus(state_) {
-  const dot  = document.getElementById('status-dot');
-  const txt  = document.getElementById('status-text');
-  const sync = document.getElementById('sync-label');
-  const ov   = document.getElementById('overlay');
-
-  dot.className = 'status-dot';
-  if (state_ === 'connected') {
-    dot.classList.add('connected');
-    txt.textContent  = 'Verbonden';
-    sync.textContent = 'Live sync';
-    ov.classList.add('hidden');
-    connected = true;
-  } else if (state_ === 'syncing') {
-    dot.classList.add('syncing');
-    txt.textContent  = 'Verbinden...';
-    sync.textContent = 'Verbinding maken...';
-  } else {
-    txt.textContent  = 'Geen verbinding';
-    sync.textContent = 'Verbroken';
-    connected = false;
-  }
-}
-
-// ── Fetch state van server ─────────────────────────────────────
-async function fetchState() {
-  if (!SESSION_ID) { setStatus('error'); return; }
-  try {
-    const r = await fetch(`${API_BASE}/api/menu/state?session=${SESSION_ID}&code=${PAIR_CODE}`);
-    if (!r.ok) { setStatus('error'); return; }
-    const data = await r.json();
-    state = data.state || {};
-    connected = true;
-    setStatus('connected');
-    applyStateToUI(state);
-    lastSyncAt = Date.now();
-    document.getElementById('last-sync-text').textContent = 'Net bijgewerkt';
-    renderPlayers(state.players || []);
-  } catch(e) {
-    setStatus('error');
-  }
-}
-
-// ── Zet state op UI ─────────────────────────────────────────────
-function applyStateToUI(s) {
-  // Toggles
-  document.querySelectorAll('.toggle[data-key]').forEach(el => {
-    const key = el.dataset.key;
-    if (key in s) el.checked = s[key] === 1 || s[key] === true;
-  });
-
-  // Sliders
-  document.querySelectorAll('input[type=range][data-key]').forEach(el => {
-    const key = el.dataset.key;
-    if (key in s) {
-      el.value = s[key];
-      const disp = document.getElementById(el.dataset.display);
-      if (disp) disp.textContent = s[key];
-    }
-  });
-
-  // Selects
-  document.querySelectorAll('select[data-key]').forEach(el => {
-    const key = el.dataset.key;
-    if (key in s) el.value = s[key];
-  });
-}
-
-// ── Stuur commando naar server ──────────────────────────────────
-async function sendCmd(key, value) {
-  if (!SESSION_ID) return;
-  try {
-    await fetch(`${API_BASE}/api/menu/set?session=${SESSION_ID}&code=${PAIR_CODE}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key, value })
-    });
-  } catch(e) {}
-}
-
-// ── Toggle handler ──────────────────────────────────────────────
-document.querySelectorAll('.toggle[data-key]').forEach(el => {
-  el.addEventListener('change', () => {
-    const key = el.dataset.key;
-    const val = el.checked ? 1 : 0;
-    state[key] = val;
-    sendCmd(key, val);
-    toast(el.checked ? `✅ ${key} aan` : `❌ ${key} uit`, 1200);
-  });
-});
-
-// ── Slider handler ─────────────────────────────────────────────
-function onSlider(el) {
-  const key = el.dataset.key;
-  const val = Number(el.value);
-  const disp = document.getElementById(el.dataset.display);
-  if (disp) disp.textContent = val;
-  state[key] = val;
-  // Debounce: wacht 300ms na het loslaten
-  clearTimeout(el._sendT);
-  el._sendT = setTimeout(() => sendCmd(key, val), 300);
-}
-
-// ── Select handler ─────────────────────────────────────────────
-function sendSelect(el) {
-  const key = el.dataset.key;
-  const val = Number(el.value);
-  state[key] = val;
-  sendCmd(key, val);
-  toast(`✅ ${key} = ${val}`, 1200);
-}
-
-// ── Render spelers ──────────────────────────────────────────────
-function renderPlayers(players) {
-  const container = document.getElementById('player-list');
-  if (!players || players.length === 0) {
-    container.innerHTML = `<div class="empty"><div class="empty-icon">👥</div>Geen spelers in de buurt</div>`;
+  // We need a session — check if we have one from URL params, else ask
+  if (!SESSION) {
+    err.textContent = 'Geen sessie gevonden. Scan de QR-code opnieuw.';
     return;
   }
 
-  container.innerHTML = players.map(p => `
-    <div class="player-card">
-      <div class="player-avatar">${p.friend ? '💚' : '👤'}</div>
-      <div>
-        <div class="player-name">${escHtml(p.name || 'Onbekend')}</div>
-        <div class="player-meta">ID: ${p.id}${p.friend ? ' · Vriend' : ''}</div>
+  try {
+    const r = await fetch(`/api/menu/state?session=${SESSION}&code=${input}`);
+    const d = await r.json();
+    if (!r.ok || d.error) { err.textContent = d.error || 'Verkeerde code.'; return; }
+    CODE = input;
+    paired = true;
+    applyState(d.state || {});
+    document.getElementById('pair-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    startSync();
+  } catch(e) {
+    err.textContent = 'Kon geen verbinding maken met de server.';
+  }
+}
+
+document.getElementById('code-input').addEventListener('keydown', e => { if (e.key === 'Enter') doPair(); });
+
+// If URL has session + code, auto-pair
+if (SESSION && CODE) {
+  document.getElementById('code-input').value = CODE;
+  doPair();
+}
+
+// ── STATE SYNC ───────────────────────────────────────────────────────
+let syncInterval = null;
+
+function startSync() {
+  setSync(true);
+  syncInterval = setInterval(async () => {
+    try {
+      const r = await fetch(`/api/menu/state?session=${SESSION}&code=${CODE}`);
+      if (!r.ok) { setSync(false); return; }
+      const d = await r.json();
+      setSync(true);
+      applyState(d.state || {});
+      updatePlayers(d.state?.players || []);
+    } catch { setSync(false); }
+  }, 1000);
+}
+
+function setSync(on) {
+  document.getElementById('conn-dot').className = 'dot' + (on ? ' connected' : '');
+  document.getElementById('conn-text').textContent = on ? 'Verbonden' : 'Verbroken';
+}
+
+function applyState(s) {
+  const map = {
+    aimBot:'aimBot', stickyAimbot:'stickyAimbot', drawAimbotFov:'drawAimbotFov',
+    dynamicAimbotFov:'dynamicAimbotFov', ignorePed:'ignorePed', ignoreDeath:'ignoreDeath',
+    ignoreFriends:'ignoreFriends', waveShieldBypass:'waveShieldBypass',
+    silent:'silent', dynamicSilentFov:'dynamicSilentFov', magicBullets:'magicBullets',
+    triggerBot:'triggerBot', aimAssist:'aimAssist', aimAssistOnlyVisible:'aimAssistOnlyVisible',
+    aimAssistIgnorePed:'aimAssistIgnorePed', aimAssistIgnoreDead:'aimAssistIgnoreDead',
+    aimAssistIgnoreFriends:'aimAssistIgnoreFriends',
+    boxEsp:'boxEsp', skeletonEsp:'skeletonEsp', nameEsp:'nameEsp', healthBar:'healthBar',
+    armorBar:'armorBar', distanceEsp:'distanceEsp', headCircleEsp:'headCircleEsp',
+    weaponEsp:'weaponEsp', directionEsp:'directionEsp', flagsEsp:'flagsEsp', hatEsp:'hatEsp',
+    ignorePed_esp:'ignorePed_esp', ignoreDeath_esp:'ignoreDeath_esp',
+    vehicleEsp:'vehicleEsp', drawLocalVehicle:'drawLocalVehicle', drawEnemyVehicle:'drawEnemyVehicle',
+    vehicleHealt:'vehicleHealt', vehicleMarker:'vehicleMarker', vehicleEspSnapline:'vehicleEspSnapline',
+    vehicleEspShowDistance:'vehicleEspShowDistance',
+    godMode:'godMode', semiGodMode:'semiGodMode', invisible:'invisible',
+    antiHeadshot:'antiHeadshot', advancedAntiHeadshot:'advancedAntiHeadshot',
+    noRagdoll:'noRagdoll', noBodyHits:'noBodyHits', absorption:'absorption',
+    damageReduction:'damageReduction', untargetable:'untargetable',
+    infiniteAmmo:'infiniteAmmo', noRecoil:'noRecoil', noSpread:'noSpread',
+    noReload:'noReload', rapidFire:'rapidFire', explosiveAmmo:'explosiveAmmo',
+    damageBoost:'damageBoost', onePunch:'onePunch', noClip:'noClip', autoStrafe:'autoStrafe',
+    gravityHack:'gravityHack', peekAssist:'peekAssist', parachute:'parachute',
+    antiGodmode:'antiGodmode', patchEnemyAntiHeadshot:'patchEnemyAntiHeadshot',
+    patchEnemyImmortality:'patchEnemyImmortality',
+    vehicleGodMode:'vehicleGodMode', vehicleAutoRepair:'vehicleAutoRepair',
+    vehicleBulletProofTyres:'vehicleBulletProofTyres', vehicleSpeedBoost:'vehicleSpeedBoost',
+    vehicleShiftBoost:'vehicleShiftBoost', rocketBoost:'rocketBoost', vehicleJump:'vehicleJump',
+    vehicleExtraGrip:'vehicleExtraGrip', vehicleEasyHandling:'vehicleEasyHandling',
+    quickUnlock:'quickUnlock', stealCar:'stealCar', vehicleFix:'vehicleFix', vehicleBreak:'vehicleBreak',
+    soloSession:'soloSession', streamProof:'streamProof', blockInput:'blockInput',
+    watermarkEnabled:'watermarkEnabled', fakeLag:'fakeLag', fakeFps:'fakeFps',
+    fovChanger:'fovChanger', weatherChanger:'weatherChanger', radarEsp:'radarEsp',
+    radarVehicles:'radarVehicles', radarNames:'radarNames', crosshair:'crosshair',
+  };
+  for (const [k] of Object.entries(map)) {
+    if (s[k] !== undefined) {
+      const el = document.querySelector(`input[onchange*="'${k}'"]`);
+      if (el && el.type === 'checkbox') el.checked = !!s[k];
+    }
+  }
+  const sliders = {
+    aimBotFov:'v-aimBotFov', smoothHorizontal:'v-smoothHorizontal', smoothVertical:'v-smoothVertical',
+    silentFov:'v-silentFov', silentFovHeight:'v-silentFovHeight', silentHitChance:'v-silentHitChance',
+    triggerFov:'v-triggerFov', triggerDelay:'v-triggerDelay',
+    aimAssistFov:'v-aimAssistFov', aimAssistDistance:'v-aimAssistDistance',
+    espDistance:'v-espDistance', crosshairSize:'v-crosshairSize', fovValue:'v-fovValue',
+    fakeLagDelay:'v-fakeLagDelay', fakeFpsTarget:'v-fakeFpsTarget',
+  };
+  for (const [k, id] of Object.entries(sliders)) {
+    if (s[k] !== undefined) {
+      const el = document.querySelector(`input[oninput*="'${k}'"]`);
+      if (el) el.value = s[k];
+      const lbl = document.getElementById(id);
+      if (lbl) lbl.textContent = s[k];
+    }
+  }
+}
+
+function updatePlayers(players) {
+  const list = document.getElementById('player-list');
+  const none = document.getElementById('no-players');
+  if (!players || players.length === 0) {
+    list.innerHTML = ''; none.style.display = 'block'; return;
+  }
+  none.style.display = 'none';
+  list.innerHTML = players.map(p => `
+    <div class="player-row">
+      <div><div class="player-name">${escHtml(p.name || 'Onbekend')}</div><div class="player-id">ID: ${p.id}</div></div>
+      <div class="player-actions">
+        <button class="btn-sm btn-tp" onclick="send('playerTeleport',${p.id})">Teleport</button>
+        <button class="btn-sm btn-friend" onclick="send('playerToggleFriend',${p.id})">${p.isFriend?'❌ Vriend':'➕ Vriend'}</button>
       </div>
-      <div class="player-dist">${p.dist || 0}m</div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── SEND ─────────────────────────────────────────────────────────────
+async function send(key, value) {
+  if (!SESSION || !CODE) return;
+  await fetch(`/api/menu/set?session=${SESSION}&code=${CODE}`, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ key, value })
+  });
 }
 
-// ── Poll loop ───────────────────────────────────────────────────
-// Haalt de state elke 1.5 seconden op (in lijn met cheat's 600ms sync)
-async function poll() {
-  setStatus('syncing');
-  await fetchState();
-  syncTimer = setTimeout(poll, 1500);
+async function sendAction(action) {
+  if (!SESSION || !CODE) return;
+  if (!confirm(`Weet je zeker dat je "${action}" wilt uitvoeren?`)) return;
+  await send(action, 1);
 }
 
-// ── Start ───────────────────────────────────────────────────────
-if (!SESSION_ID) {
-  document.getElementById('overlay').querySelector('.overlay-sub').textContent =
-    'Geen sessie-ID gevonden. Scan de QR-code vanuit de cheat.';
-} else {
-  poll();
+let slideTimers = {};
+function slideSet(key, el) {
+  const id = 'v-' + key;
+  const lbl = document.getElementById(id);
+  if (lbl) lbl.textContent = el.value;
+  clearTimeout(slideTimers[key]);
+  slideTimers[key] = setTimeout(() => send(key, parseInt(el.value)), 200);
+}
+
+// ── NAV ───────────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+}
+
+function switchTab(btn, targetId) {
+  const page = btn.closest('.page');
+  page.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const section = document.getElementById(targetId);
+  if (!section) return;
+  const siblings = section.parentElement.children;
+  for (const s of siblings) {
+    if (s.id && s.id !== targetId && !s.classList.contains('tabs') && !s.classList.contains('page-header'))
+      s.style.display = 'none';
+  }
+  section.style.display = '';
 }
 </script>
 </body>
