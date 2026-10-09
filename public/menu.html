@@ -477,6 +477,7 @@
             <div class="opt"><div class="opt-label">ESP Outline</div><label class="toggle"><input type="checkbox" onchange="send('espOutline',+this.checked)"><div class="track"></div></label></div>
             <div class="opt"><div class="opt-label">Player Info Panel</div><label class="toggle"><input type="checkbox" onchange="send('playerInfoPanel',+this.checked)"><div class="track"></div></label></div>
             <div class="opt"><div class="opt-label">Players Looking Warning</div><label class="toggle"><input type="checkbox" onchange="send('playersLookingWarning',+this.checked)"><div class="track"></div></label></div>
+            <div class="opt"><div class="opt-label">Observer</div><label class="toggle"><input type="checkbox" onchange="send('spectatorList',+this.checked)"><div class="track"></div></label></div>
             <div class="opt"><div class="opt-label">Show Target Bones</div><label class="toggle"><input type="checkbox" onchange="send('showTargetBones',+this.checked)"><div class="track"></div></label></div>
             <div class="opt"><div class="opt-label">Show ESP Preview</div><label class="toggle"><input type="checkbox" onchange="send('showEspPreview',+this.checked)"><div class="track"></div></label></div>
             <div class="slider-row">
@@ -807,7 +808,7 @@ function applyState(s) {
     'espToggle','boxEsp','skeletonEsp','nameEsp','healthBar','armorBar',
     'distanceEsp','headCircleEsp','weaponEsp','lineEsp','flagsEsp','hatEsp',
     'rainbowEsp','onlyVisible_esp','ignorePed_esp','ignoreDeath_esp',
-    'espOutline','playerInfoPanel','playersLookingWarning','showTargetBones','showEspPreview',
+    'espOutline','playerInfoPanel','playersLookingWarning','spectatorList','showTargetBones','showEspPreview',
     'vehicleEsp','drawLocalVehicle','drawEnemyVehicle','vehicleHealt',
     'vehicleMarker','vehicleEspSnapline','vehicleEspShowDistance',
     'godMode','semiGodMode','invisible','antiHeadshot','advancedAntiHeadshot',
