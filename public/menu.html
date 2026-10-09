@@ -381,8 +381,8 @@
               <input type="range" min="1" max="200" value="30" oninput="slideSet('silentFovHeight',this)">
             </div>
             <div class="slider-row">
-              <div class="slider-header"><span>Hit Chance (%)</span><span class="slider-val" id="v-silentHitChance">80</span></div>
-              <input type="range" min="1" max="100" value="80" oninput="slideSet('silentHitChance',this)">
+              <div class="slider-header"><span>Miss Chance (%)</span><span class="slider-val" id="v-silentMissChance">0</span></div>
+              <input type="range" min="0" max="100" value="0" oninput="slideSet('silentMissChance',this)">
             </div>
           </div>
         </div>
@@ -838,7 +838,7 @@ function applyState(s) {
   // Sliders
   const sliderKeys = {
     aimBotFov:'v-aimBotFov', smoothHorizontal:'v-smoothHorizontal', smoothVertical:'v-smoothVertical',
-    silentFov:'v-silentFov', silentFovHeight:'v-silentFovHeight', silentHitChance:'v-silentHitChance',
+    silentFov:'v-silentFov', silentFovHeight:'v-silentFovHeight', silentMissChance:'v-silentMissChance',
     triggerFov:'v-triggerFov', triggerDelay:'v-triggerDelay',
     aimAssistFov:'v-aimAssistFov', aimAssistDistance:'v-aimAssistDistance', aimAssistStrength:'v-aimAssistStrength',
     espDistance:'v-espDistance', vehicleEspDistance:'v-vehicleEspDistance',
