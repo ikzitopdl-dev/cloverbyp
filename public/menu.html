@@ -142,11 +142,12 @@
   /* Option row */
   .opt {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 8px 0; border-bottom: 1px solid #1f1410;
+    padding: 10px 0; border-bottom: 1px solid #1f1410; gap: 16px;
   }
   .opt:last-child { border-bottom: none; }
-  .opt-label { font-size: 13px; color: var(--text); line-height: 1.3; }
+  .opt-label { font-size: 13px; color: var(--text); line-height: 1.3; flex: 1; min-width: 0; }
   .opt-label small { display: block; font-size: 10px; color: var(--muted); margin-top: 1px; }
+  .opt .toggle { flex-shrink: 0; margin-left: auto; }
 
   /* Toggle */
   .toggle { position: relative; width: 38px; height: 21px; flex-shrink: 0; }
@@ -801,7 +802,8 @@ function applyState(s) {
   for (const k of toggleKeys) {
     if (s[k] !== undefined) {
       const el = document.querySelector(`input[onchange*="'${k}'"]`);
-      if (el && el.type === 'checkbox') el.checked = !!s[k];
+      // Don't overwrite if user just changed this key (lockout for 2s)
+      if (el && el.type === 'checkbox' && !userLock[k]) el.checked = !!s[k];
     }
   }
   // Sliders
@@ -818,7 +820,7 @@ function applyState(s) {
     aimDistance:'v-aimDistance',
   };
   for (const [k, id] of Object.entries(sliderKeys)) {
-    if (s[k] !== undefined) {
+    if (s[k] !== undefined && !userLock[k]) {
       const el = document.querySelector(`input[oninput*="'${k}'"]`);
       if (el) el.value = s[k];
       const lbl = document.getElementById(id);
@@ -850,8 +852,15 @@ function updatePlayers(players) {
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 // ── SEND ──────────────────────────────────────────────────────────────
+const userLock = {}; // key → true while user's change is in-flight (2s)
+
 async function send(key, value) {
   if (!SESSION || !CODE) return;
+  // Lock this key so the next sync doesn't overwrite what the user just set
+  userLock[key] = true;
+  clearTimeout(userLock['_t_' + key]);
+  userLock['_t_' + key] = setTimeout(() => { delete userLock[key]; }, 2000);
+
   await fetch(`/api/menu/set?session=${SESSION}&code=${CODE}`, {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({key, value})
@@ -871,6 +880,10 @@ let st = {};
 function slideSet(key, el) {
   const lbl = document.getElementById('v-' + key);
   if (lbl) lbl.textContent = el.value;
+  // Lock so sync doesn't reset slider mid-drag
+  userLock[key] = true;
+  clearTimeout(userLock['_t_' + key]);
+  userLock['_t_' + key] = setTimeout(() => { delete userLock[key]; }, 2000);
   clearTimeout(st[key]);
   st[key] = setTimeout(() => send(key, parseInt(el.value)), 180);
 }
