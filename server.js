@@ -16,7 +16,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ── Helper ────────────────────────────────────────────────────────────
 function menuUrl(sessionId, pairingCode) {
   const base = process.env.BASE_URL || `http://localhost:${PORT}`;
-  return `${base}/menu?session=${sessionId}&code=${pairingCode}`;
+  // Only embed sessionId in the QR URL — the user must manually type the code
+  return `${base}/menu?session=${sessionId}`;
 }
 
 // ── In-memory session store ───────────────────────────────────────────
