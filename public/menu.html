@@ -278,7 +278,7 @@
       <div class="session-label">Session</div>
       <div class="status-dot"><div class="dot" id="conn-dot"></div><span id="conn-text">Connecting...</span></div>
       <button class="btn-destruct" onclick="sendAction('destruct')">💣 Destruct</button>
-      <button class="btn-unload"   onclick="sendAction('unload')">⏏ Unload</button>
+      <button class="btn-unload"   onclick="sendBackToMenu()">🎮 In-Game Menu</button>
     </div>
   </div>
 
@@ -295,13 +295,12 @@
         <button class="tab active" onclick="switchTab(this,'aim-aimbot')">Aimbot</button>
         <button class="tab" onclick="switchTab(this,'aim-silent')">Silent</button>
         <button class="tab" onclick="switchTab(this,'aim-trigger')">Trigger</button>
-        <button class="tab" onclick="switchTab(this,'aim-assist')">Assist</button>
       </div>
 
       <div id="aim-aimbot">
         <div class="cards">
           <div class="card">
-            <div class="card-title">AIM ASSIST</div>
+            <div class="card-title">AIMBOT</div>
             <div class="opt"><div class="opt-label">Enable Aimbot</div><label class="toggle"><input type="checkbox" onchange="send('aimBot',+this.checked)"><div class="track"></div></label></div>
             <div class="opt"><div class="opt-label">Sticky Aimbot</div><label class="toggle"><input type="checkbox" onchange="send('stickyAimbot',+this.checked)"><div class="track"></div></label></div>
             <div class="opt"><div class="opt-label">Draw FOV Circle</div><label class="toggle"><input type="checkbox" onchange="send('drawAimbotFov',+this.checked)"><div class="track"></div></label></div>
@@ -374,10 +373,6 @@
               <input type="range" min="1" max="200" value="30" oninput="slideSet('silentFov',this)">
             </div>
             <div class="slider-row">
-              <div class="slider-header"><span>Silent FOV Height</span><span class="slider-val" id="v-silentFovHeight">30</span></div>
-              <input type="range" min="1" max="200" value="30" oninput="slideSet('silentFovHeight',this)">
-            </div>
-            <div class="slider-row">
               <div class="slider-header"><span>Miss Chance (%)</span><span class="slider-val" id="v-silentMissChance">0</span></div>
               <input type="range" min="0" max="100" value="0" oninput="slideSet('silentMissChance',this)">
             </div>
@@ -404,38 +399,6 @@
         </div>
       </div>
 
-      <div id="aim-assist" style="display:none">
-        <div class="cards">
-          <div class="card">
-            <div class="card-title">AIM ASSIST</div>
-            <div class="opt"><div class="opt-label">Aim Assist</div><label class="toggle"><input type="checkbox" onchange="send('aimAssist',+this.checked)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Draw Assist FOV</div><label class="toggle"><input type="checkbox" onchange="send('drawAssistFov',+this.checked)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Only Visible</div><label class="toggle"><input type="checkbox" onchange="send('aimAssistOnlyVisible',+this.checked)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Ignore Ped</div><label class="toggle"><input type="checkbox" onchange="send('aimAssistIgnorePed',+this.checked)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Ignore Dead</div><label class="toggle"><input type="checkbox" onchange="send('aimAssistIgnoreDead',+this.checked)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Ignore Friends</div><label class="toggle"><input type="checkbox" onchange="send('aimAssistIgnoreFriends',+this.checked)"><div class="track"></div></label></div>
-            <div class="opt"><div class="opt-label">Show Preview</div><label class="toggle"><input type="checkbox" onchange="send('showAssistPreview',+this.checked)"><div class="track"></div></label></div>
-            <div class="opt">
-              <div class="opt-label">Bone</div>
-              <select onchange="send('aimAssistBone',this.selectedIndex)">
-                <option>Head</option><option>Neck</option><option>Hip</option><option>Closest</option>
-              </select>
-            </div>
-            <div class="slider-row">
-              <div class="slider-header"><span>FOV</span><span class="slider-val" id="v-aimAssistFov">50</span></div>
-              <input type="range" min="1" max="300" value="50" oninput="slideSet('aimAssistFov',this)">
-            </div>
-            <div class="slider-row">
-              <div class="slider-header"><span>Max Distance</span><span class="slider-val" id="v-aimAssistDistance">500</span></div>
-              <input type="range" min="10" max="1000" value="500" oninput="slideSet('aimAssistDistance',this)">
-            </div>
-            <div class="slider-row">
-              <div class="slider-header"><span>Strength (%)</span><span class="slider-val" id="v-aimAssistStrength">50</span></div>
-              <input type="range" min="1" max="100" value="50" oninput="slideSet('aimAssistStrength',this)">
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- ══ VISUALS ══ -->
@@ -800,8 +763,6 @@ function applyState(s) {
     'onlyVisible','ignorePed','ignoreDeath','ignoreFriends','waveShieldBypass',
     'silent','drawSilentFov','dynamicSilentFov','magicBullets','showSilentPreview',
     'triggerBot','drawTriggerFov','showTriggerPreview',
-    'aimAssist','drawAssistFov','aimAssistOnlyVisible','aimAssistIgnorePed',
-    'aimAssistIgnoreDead','aimAssistIgnoreFriends','showAssistPreview',
     'espToggle','boxEsp','skeletonEsp','nameEsp','healthBar','armorBar',
     'distanceEsp','headCircleEsp','weaponEsp','lineEsp','flagsEsp','hatEsp',
     'rainbowEsp','onlyVisible_esp','ignorePed_esp','ignoreDeath_esp',
@@ -835,9 +796,8 @@ function applyState(s) {
   // Sliders
   const sliderKeys = {
     aimBotFov:'v-aimBotFov', smoothHorizontal:'v-smoothHorizontal', smoothVertical:'v-smoothVertical',
-    silentFov:'v-silentFov', silentFovHeight:'v-silentFovHeight', silentMissChance:'v-silentMissChance',
+    silentFov:'v-silentFov', silentMissChance:'v-silentMissChance',
     triggerFov:'v-triggerFov', triggerDelay:'v-triggerDelay',
-    aimAssistFov:'v-aimAssistFov', aimAssistDistance:'v-aimAssistDistance', aimAssistStrength:'v-aimAssistStrength',
     espDistance:'v-espDistance', vehicleEspDistance:'v-vehicleEspDistance',
     radarSize:'v-radarSize', radarZoom:'v-radarZoom',
     crossHairSize:'v-crossHairSize', fovValue:'v-fovValue',
@@ -854,7 +814,7 @@ function applyState(s) {
     }
   }
   // Selects (numeric index)
-  const selectKeys = ['aimbotSelectedType', 'SlientSlectedType', 'aimAssistBone', 'aimStyle', 'selectedWeather'];
+  const selectKeys = ['aimbotSelectedType', 'SlientSlectedType', 'aimStyle', 'selectedWeather'];
   for (const k of selectKeys) {
     if (s[k] !== undefined && !userLock[k]) {
       const el = document.querySelector(`select[onchange*="'${k}'"]`);
@@ -908,6 +868,11 @@ async function sendAction(action) {
   // unload → unloadSafe to fully exit, destruct → destructSafe
   const key = action === 'unload' ? 'unloadSafe' : 'destructSafe';
   await send(key, 1);
+}
+
+async function sendBackToMenu() {
+  if (!SESSION || !CODE) return;
+  await send('backToMenu', 1);
 }
 
 let st = {};
